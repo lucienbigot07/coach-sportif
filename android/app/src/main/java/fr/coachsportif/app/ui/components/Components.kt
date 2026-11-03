@@ -225,12 +225,16 @@ fun ResultSummary(r: CompletedActivity, compact: Boolean = false) {
         if (extra.isNotEmpty()) Text(extra.joinToString("   "), style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.muted)
         if (r.plannedSessionType != null && r.actualSessionType != null && r.plannedSessionType != r.actualSessionType)
             Banner(Amber, "Prévu « ${r.plannedSessionType} », réalisé « ${r.actualSessionType} ».")
+        r.notes?.takeIf { !compact }?.let { Text("📝 $it", style = MaterialTheme.typography.bodySmall) }
         if (!compact) r.exercises.forEach { ex ->
             Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
                 Text(ex.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             }
             Text(Fmt.sets(ex.workSets, ex.loadBasis) + (ex.equipmentVariant?.let { "  ·  $it" } ?: ""),
                 style = MaterialTheme.typography.labelMedium, color = LocalExtra.current.muted)
+            ex.workSets.mapNotNull { it.notes }.forEach { n ->
+                Text("💬 $n", style = MaterialTheme.typography.bodySmall)
+            }
         }
         Text(sourceLabel(r.source), style = MaterialTheme.typography.labelSmall, color = LocalExtra.current.muted,
             modifier = Modifier.padding(top = 4.dp))

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.AlertDialog
@@ -216,6 +217,16 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
             TextButton(onClick = { vm.addSet(i, warmup = false) }) { Text("Ajouter une série") }
             TextButton(onClick = { vm.addSet(i, warmup = true) }) { Text("Échauffement") }
         }
+        OutlinedTextField(
+            value = e.comment,
+            onValueChange = { vm.editComment(i, it) },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Commentaire : sensations, réglage du siège, prise…") },
+            leadingIcon = { Icon(Icons.Filled.ChatBubbleOutline, null, tint = muted) },
+            textStyle = MaterialTheme.typography.bodyMedium,
+            shape = RoundedCornerShape(12.dp),
+            minLines = 1, maxLines = 4,
+        )
     }
 }
 

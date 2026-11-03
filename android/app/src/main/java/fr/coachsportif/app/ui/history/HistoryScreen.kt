@@ -186,7 +186,10 @@ private fun ExerciseDetail(h: ExerciseHistory) {
         h.sessions.forEach { s ->
             Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Text(s.date, style = MaterialTheme.typography.labelMedium, color = muted, modifier = Modifier.width(96.dp))
-                Text(Fmt.sets(s.workSets, h.variant.loadBasis), style = MaterialTheme.typography.labelMedium)
+                Column {
+                    Text(Fmt.sets(s.workSets, h.variant.loadBasis), style = MaterialTheme.typography.labelMedium)
+                    s.workSets.mapNotNull { it.notes }.forEach { Text("💬 $it", style = MaterialTheme.typography.bodySmall) }
+                }
             }
         }
         if (h.sessions.isEmpty()) Text("Pas encore de séance saisie dans l'appli pour cette machine.",

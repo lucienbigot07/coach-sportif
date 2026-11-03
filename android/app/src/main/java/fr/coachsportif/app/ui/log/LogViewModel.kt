@@ -38,6 +38,7 @@ data class ExDraft(
     val refLine: String? = null,
     val targetLine: String? = null,
     val sets: List<SetDraft> = emptyList(),
+    val comment: String = "",             // commentaire libre sur l'exercice (sensations, réglage machine…)
 )
 
 @Serializable
@@ -133,6 +134,10 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     }
 
     /** Copie la charge de la série précédente (geste rapide). */
+    fun editComment(ex: Int, text: String) = edit { d ->
+        d.copy(exercises = d.exercises.mapIndexed { i, e -> if (i == ex) e.copy(comment = text.take(500)) else e })
+    }
+
     fun copyPreviousLoad(ex: Int, set: Int) = edit { d ->
         d.copy(exercises = d.exercises.mapIndexed { i, e ->
             if (i != ex || set == 0) e else e.copy(sets = e.sets.mapIndexed { j, s -> if (j == set) s.copy(load = e.sets[set - 1].load) else s })
@@ -142,8 +147,10 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     /** Construit le payload : seules les séries cochées ET mesurées sont envoyées ; inconnu = null, jamais 0. */
     fun buildPayload(a: PlannedActivity, d: LogDraft): CompletionPayload {
         val sets = mutableListOf<SetIn>()
+        val orphanComments = mutableListOf<String>()
         d.exercises.forEachIndexed { i, e ->
             var work = 0; var warm = 0
+            val before = sets.size
             e.sets.filter { it.done }.forEach { s ->
                 val perf = s.perf.trim().toIntOrNull() ?: return@forEach
                 val idx = if (s.isWarmup) ++warm else ++work
@@ -156,6 +163,14 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                     rir = s.rir.trim().toIntOrNull(),
                 )
             }
+            // le commentaire de l'exercice est rattaché à sa dernière série de travail ;
+            // sans série enregistrée, il rejoint les notes de la séance (rien n'est perdu)
+            val comment = e.comment.trim()
+            if (comment.isNotEmpty()) {
+                val lastWork = (sets.size - 1 downTo before).firstOrNull { !sets[it].isWarmup }
+                if (lastWork != null) sets[lastWork] = sets[lastWork].copy(notes = comment)
+                else orphanComments += "${e.name} : $comment"
+            }
         }
         val en = d.endurance
         val distM = Fmt.parseDecimal(en.distance)?.let { if (a.sport == "swimming") it else it * 1000 }
@@ -166,7 +181,8 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         ).takeIf { it != EnduranceIn() }
         return CompletionPayload(
             plannedSessionKey = a.sessionKey, date = a.date, sport = a.sport, subtype = a.subtype,
-            rpe10 = d.rpe?.toDouble(), actualSessionType = en.effortType, notes = d.notes.ifBlank { null },
+            rpe10 = d.rpe?.toDouble(), actualSessionType = en.effortType,
+            notes = (listOf(d.notes.trim()).filter { it.isNotEmpty() } + orphanComments).joinToString("\n").ifBlank { null },
             startedAt = Instant.ofEpochMilli(d.startedAtMs).toString(), endedAt = Instant.now().toString(),
             sets = sets, endurance = endurance,
         )

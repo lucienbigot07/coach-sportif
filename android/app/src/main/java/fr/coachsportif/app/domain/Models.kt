@@ -225,6 +225,7 @@ data class SetIn(
     val steps: Int? = null,
     val seconds: Int? = null,
     val rir: Int? = null,
+    val notes: String? = null,
 )
 
 @Serializable
