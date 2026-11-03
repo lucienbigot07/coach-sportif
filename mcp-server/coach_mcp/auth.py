@@ -201,7 +201,8 @@ class CoachOAuthProvider(OAuthAuthorizationServerProvider[AuthorizationCode, Ref
           <label>Mot de passe<input name=password type=password autocomplete=current-password required></label>
           <button>Autoriser</button></form>"""
         return HTMLResponse(_page("Connexion Coach Sportif", body), headers={"X-Frame-Options": "DENY",
-                            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'"})
+                            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; "
+                            "form-action 'self' https://claude.ai https://claude.com http://localhost:* http://127.0.0.1:*"})
 
     # -- codes & jetons
     async def load_authorization_code(self, client: OAuthClientInformationFull, authorization_code: str) -> AuthorizationCode | None:

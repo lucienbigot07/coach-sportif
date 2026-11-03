@@ -100,7 +100,11 @@ def test_oauth_puis_outils(server):
     assert r.status_code == 302
     login_url = r.headers["location"]
     req_id = parse_qs(urlparse(login_url).query)["req"][0]
-    assert "Autoriser" in s.get(login_url).text
+    page = s.get(login_url)
+    assert "Autoriser" in page.text
+    # Chrome applique form-action aussi à la redirection qui suit l'envoi du formulaire :
+    # sans claude.ai autorisé, l'utilisateur resterait bloqué sur la page de connexion.
+    assert "https://claude.ai" in page.headers["Content-Security-Policy"]
     # 4. refus : mauvais mot de passe, e-mail non autorisé
     assert "Identifiants refusés" in s.post(base + "/login", data={"req": req_id, "email": "athlete@test.local",
                                                                    "password": "faux"}).text
