@@ -8,9 +8,12 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// coach.properties (public, versionné) puis local.properties (poste du développeur) qui peut le surcharger
 val localProps = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
+    listOf("coach.properties", "local.properties").forEach { name ->
+        val f = rootProject.file(name)
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
 }
 fun cfg(name: String): String =
     (localProps.getProperty(name) ?: System.getenv(name.uppercase().replace('.', '_')) ?: "")
