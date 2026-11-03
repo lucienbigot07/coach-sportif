@@ -253,6 +253,27 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         }
     }
 
+    /** Message prérempli pour le coach : la séance en cours n'est pas encore en base, on la résume ici. */
+    fun coachMessage(): String {
+        val r = ui.value as? LogUi.Ready ?: return "Question sur ma séance : "
+        val a = r.activity; val d = r.draft
+        val lines = mutableListOf("Je suis en pleine séance « ${a.title} » du ${Fmt.dayTitle(a.date)} (${a.sessionKey}).")
+        val done = d.exercises.mapNotNull { e ->
+            val s = e.sets.filter { it.done && !it.isWarmup && it.perf.isNotBlank() }
+            if (s.isEmpty() && e.comment.isBlank()) null
+            else "- ${e.name}${e.equipment?.let { " ($it)" } ?: ""}${if (e.added) " [ajouté hors programme]" else ""} : " +
+                s.joinToString(" / ") { (if (it.load.isNotBlank()) "${it.load} kg × " else "") + it.perf + (if (e.unit == "steps") " pas" else "") } +
+                (e.comment.takeIf { it.isNotBlank() }?.let { " — $it" } ?: "")
+        }
+        if (done.isNotEmpty()) { lines += "Déjà fait (pas encore enregistré) :"; lines += done }
+        else if (a.sport == "strength") lines += "Je n'ai encore validé aucune série."
+        val left = d.exercises.filter { e -> e.sets.none { it.done } }.map { it.name }
+        if (left.isNotEmpty()) lines += "Reste : " + left.joinToString(", ")
+        lines += ""
+        lines += "Ma question : "
+        return lines.joinToString("\n")
+    }
+
     fun workSetsReady(d: LogDraft) = d.exercises.sumOf { e -> e.sets.count { it.done && !it.isWarmup && it.perf.toIntOrNull() != null } }
     fun clearOutcome() = outcome.update { null }
 }
