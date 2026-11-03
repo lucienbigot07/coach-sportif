@@ -1,5 +1,7 @@
 package fr.coachsportif.app.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import fr.coachsportif.app.BuildConfig
 import fr.coachsportif.app.CoachApp
 import fr.coachsportif.app.ui.components.ScreenHeader
 import fr.coachsportif.app.ui.components.SectionCard
@@ -71,6 +75,11 @@ fun SettingsScreen() {
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         ScreenHeader(kicker = null, title = "Réglages")
+        SectionCard {
+            SettingRow(Icons.Filled.SystemUpdate, "Mettre à jour l'application",
+                "Version installée : ${BuildConfig.VERSION_NAME}. Télécharge la dernière version puis ouvre le fichier.",
+                onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.UPDATE_URL))) })
+        }
         SectionCard {
             SettingRow(Icons.Filled.Person, session?.email ?: "Non connecté", "Compte relié au connecteur Claude")
             HorizontalDivider(Modifier.padding(vertical = 8.dp), color = LocalExtra.current.border)

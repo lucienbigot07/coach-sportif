@@ -45,4 +45,4 @@ jobs:
           gh release delete apk-latest -y --cleanup-tag || true
           gh release create apk-latest coach-sportif.apk --latest \
             --title "Coach Sportif — dernière version" \
-            --notes "APK compilé automatiquement depuis ${GITHUB_SHA::7}. Installer coach-sportif.apk sur le téléphone."
+            --notes "Version 0.2.${GITHUB_RUN_NUMBER} (${GITHUB_SHA::7}). Installer coach-sportif.apk par-dessus la version actuelle."

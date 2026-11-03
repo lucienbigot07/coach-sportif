@@ -26,11 +26,16 @@ android {
         applicationId = "fr.coachsportif.app"
         minSdk = 29          // Android 10+ (Galaxy S25 Ultra : Android 15/16)
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        // numéro de compilation GitHub → chaque APK est une version plus récente que la précédente
+        val build = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        val sha = (System.getenv("GITHUB_SHA") ?: "local").take(7)
+        versionCode = build
+        versionName = "0.2.$build ($sha)"
         // URL + clé PUBLIQUE Supabase (publishable/anon). Aucun secret : la sécurité repose sur le RLS.
         buildConfigField("String", "SUPABASE_URL", "\"${cfg("coach.supabaseUrl")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${cfg("coach.supabaseAnonKey")}\"")
+        buildConfigField("String", "UPDATE_URL",
+            "\"https://github.com/lucienbigot07/coach-sportif/releases/download/apk-latest/coach-sportif.apk\"")
     }
 
     signingConfigs {
