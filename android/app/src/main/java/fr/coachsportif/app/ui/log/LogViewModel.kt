@@ -54,6 +54,7 @@ data class EnduranceDraft(
 
 @Serializable
 data class LogDraft(
+    val activityVersion: Int? = null,     // version de la séance publiée par le coach au moment du brouillon
     val exercises: List<ExDraft> = emptyList(),
     val endurance: EnduranceDraft = EnduranceDraft(),
     val rpe: Int? = null,
@@ -75,10 +76,15 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
 
     init {
         viewModelScope.launch {
-            val a = repo.observeDay(date).first()?.data?.activities?.firstOrNull { it.sessionKey == sessionKey }
+            // dernière version publiée par le coach (le cache sert seulement hors connexion)
+            val fresh = runCatching { repo.refreshDay(date) }.getOrNull()
+            val a = (fresh ?: repo.observeDay(date).first()?.data)?.activities?.firstOrNull { it.sessionKey == sessionKey }
             if (a == null) { ui.value = LogUi.Missing("Séance introuvable dans le dernier planning synchronisé."); return@launch }
-            val draft = repo.loadDraft(sessionKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
-                ?: initialDraft(a)
+            val saved = repo.loadDraft(sessionKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
+            // le coach a modifié la séance depuis le brouillon : on repart de la nouvelle version
+            // tant qu'aucune série n'a été cochée (sinon on garde la saisie en cours)
+            val untouched = saved?.exercises?.none { e -> e.sets.any { it.done } } ?: true
+            val draft = if (saved == null || (saved.activityVersion != a.version && untouched)) initialDraft(a) else saved
             ui.value = LogUi.Ready(a, draft)
         }
     }
@@ -86,7 +92,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     private fun initialDraft(a: PlannedActivity): LogDraft {
         val refs: List<ExerciseRef> = a.exercises.ifEmpty { a.splitReferences }
         val nSets = (a.target["sets_per_exercise_approx"]?.toString()?.toIntOrNull()) ?: 3
-        return LogDraft(exercises = refs.map { e ->
+        return LogDraft(activityVersion = a.version, exercises = refs.map { e ->
             val ll = e.reference?.lastLogged
             val last = ll?.sets
             val load = e.targetLoadKg ?: last?.firstOrNull()?.loadKg
