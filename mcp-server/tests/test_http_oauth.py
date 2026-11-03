@@ -133,12 +133,12 @@ def test_oauth_puis_outils(server):
                 day = await c.call_tool("get_day_plan", {"date": "2026-11-02"})
                 return len(tools.tools), day
     n, day = asyncio.run(use(tok["access_token"]))
-    assert n == 12 and not day.is_error
+    assert n == 13 and not day.is_error
     keys = {a["session_key"] for a in day.structured_content["activities"]}
     assert {"20261102_run", "20261102_quad"} <= keys
     restart()  # le jeton reste valide après redémarrage : aucun état perdu
     n_after, _ = asyncio.run(use(tok["access_token"]))
-    assert n_after == 12
+    assert n_after == 13
 
     # 8. refresh token rotatif ; jeton invalide refusé
     new = s.post(meta["token_endpoint"], data={"grant_type": "refresh_token", "refresh_token": tok["refresh_token"],
@@ -151,7 +151,7 @@ def test_oauth_puis_outils(server):
                headers={"Accept": "application/json, text/event-stream", "Authorization": "Bearer inventé"})
     assert r.status_code == 401
     n2, _ = asyncio.run(use(new["access_token"]))
-    assert n2 == 12 and fake.refreshes == 1
+    assert n2 == 13 and fake.refreshes == 1
     # inscription d'un client avec un retour hors Claude → refusé
     evil = s.post(meta["registration_endpoint"], json={"redirect_uris": ["https://pirate.example/cb"],
                   "token_endpoint_auth_method": "none", "grant_types": ["authorization_code"], "response_types": ["code"]})

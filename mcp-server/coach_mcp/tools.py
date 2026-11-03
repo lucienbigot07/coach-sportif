@@ -285,6 +285,38 @@ def build_server(backend: Backend, resolve_identity: IdentityResolver, **server_
         k = idempotency_key or _auto_key("record_user_reported_session", payload)
         return await rpc("complete_activity", p_payload=payload, p_idempotency_key=k, p_actor="claude_mcp")
 
+    @mcp.tool(annotations=WRITE, description=(
+        "Corrige un résultat DÉJÀ enregistré (erreur de saisie : ressenti, notes, distance, durée, FC, séries) avec raison. "
+        "L'ancienne valeur reste dans l'historique. Lire d'abord la séance (get_recent_completed_sessions) pour obtenir "
+        "completed_activity_id et version. Uniquement des valeurs données par l'utilisateur."))
+    async def correct_session_result(
+        completed_activity_id: str, expected_version: int, reason: str,
+        user_approval_reference: Annotated[str, Field(description="citation exacte de la correction demandée")],
+        rpe_10: Annotated[float, Field(ge=1, le=10)] | None = None,
+        notes: str | None = None,
+        endurance: EnduranceIn | None = None,
+        sets: list[ReportedSet] | None = Field(None, description="remplace TOUTES les séries de la séance"),
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        if not user_approval_reference or len(user_approval_reference.strip()) < 2:
+            raise ToolError(json.dumps({"success": False, "error": "approval_required", "synchronized": False}))
+        patch: dict[str, Any] = {}
+        if rpe_10 is not None:
+            patch["rpe_10"] = rpe_10
+        if notes is not None:
+            patch["notes"] = notes
+        if endurance is not None:
+            patch["endurance"] = endurance.model_dump(mode="json", exclude_none=True)
+        if sets is not None:
+            patch["sets"] = _dump(sets)
+        if not patch:
+            raise ToolError(json.dumps({"success": False, "error": "empty_patch", "synchronized": False}))
+        k = idempotency_key or _auto_key("correct_session_result", {"id": completed_activity_id, "v": expected_version, "p": patch})
+        return await rpc("correct_completed_activity", p_completed_activity_id=completed_activity_id,
+                         p_expected_version=expected_version, p_patch=patch,
+                         p_reason=f"{reason} (demandé : « {user_approval_reference[:200]} »)",
+                         p_idempotency_key=k, p_actor="claude_mcp")
+
     return mcp
 
 

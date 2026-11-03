@@ -44,7 +44,8 @@ def test_outils_exposes(fresh):
     tools = run(go())
     assert set(tools) == {"get_profile", "get_training_context", "list_week_plan", "get_day_plan", "get_exercise_history",
                           "get_recent_completed_sessions", "get_week_summary", "create_plan_draft", "publish_validated_plan",
-                          "revise_session", "mark_event_confirmation", "record_user_reported_session"}
+                          "revise_session", "mark_event_confirmation", "record_user_reported_session",
+                          "correct_session_result"}
     assert tools["get_day_plan"].annotations.read_only_hint is True
     assert "user_approval_reference" in tools["revise_session"].input_schema["required"]
 
@@ -133,3 +134,16 @@ def test_declaration_en_conversation(fresh):
     swim = {a["session_key"]: a for a in call(fresh, "get_day_plan", p_date="2026-11-03")["activities"]}["20261103_swim"]
     assert swim["status"] == "completed" and swim["result"]["endurance"]["distance_m"] == 550
     assert "avg_hr" not in swim["result"]["endurance"]  # rien d'inventé
+
+
+def test_correction_d_un_resultat(fresh):
+    """« 2 sur 10 pardon, corrige » : le ressenti est corrigé, l'ancienne valeur reste dans l'historique."""
+    async def go():
+        async with Client(build_server(fresh, _resolve)) as c:
+            s = payload(await c.call_tool("get_recent_completed_sessions", {"from_date": "2026-11-03"}))["sessions"][0]
+            r = payload(await c.call_tool("correct_session_result", {
+                "completed_activity_id": s["completed_activity_id"], "expected_version": s["version"],
+                "reason": "ressenti mal saisi", "user_approval_reference": "2 sur 10 pardon corrige", "rpe_10": 2}))
+            return s, r
+    s, r = run(go())
+    assert r["success"] and r["version"] == s["version"] + 1 and r["result"]["rpe_10"] == 2
