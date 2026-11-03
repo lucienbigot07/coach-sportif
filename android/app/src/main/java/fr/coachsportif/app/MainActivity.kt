@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -65,7 +66,7 @@ private fun AppNav() {
     val route = entry?.destination?.route
     val start: (PlannedActivity) -> Unit = { a -> nav.navigate("log/${a.date}/${a.sessionKey}") }
     Scaffold(bottomBar = {
-        if (tabs.any { it.route == route }) NavigationBar {
+        if (tabs.any { it.route == route }) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
             tabs.forEach { t ->
                 NavigationBarItem(selected = route == t.route, label = { Text(t.label) }, icon = { Icon(t.icon, null) },
                     onClick = {
