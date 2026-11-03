@@ -214,9 +214,21 @@ data class WriteResult(
 
 /* ---------------------------------------------------------------- saisie (payload complete_activity) */
 
+/** Nouvelle machine / variante créée pendant la séance (aucune comparaison avec une autre machine). */
+@Serializable
+data class NewVariantIn(
+    val key: String,
+    val name: String,
+    val split: String? = null,
+    val equipmentVariant: String? = null,
+    val loadBasis: String = "unknown",
+    val performanceUnit: String = "reps",
+)
+
 @Serializable
 data class SetIn(
     val variantKey: String,
+    val newVariant: NewVariantIn? = null,
     val exercisePosition: Int? = null,
     val setIndex: Int,
     val isWarmup: Boolean = false,

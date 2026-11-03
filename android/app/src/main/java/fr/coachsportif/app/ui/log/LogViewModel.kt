@@ -8,6 +8,8 @@ import fr.coachsportif.app.domain.CompletionPayload
 import fr.coachsportif.app.domain.EnduranceIn
 import fr.coachsportif.app.domain.ExerciseRef
 import fr.coachsportif.app.domain.Fmt
+import fr.coachsportif.app.domain.NewVariantIn
+import fr.coachsportif.app.domain.VariantRow
 import fr.coachsportif.app.domain.PlannedActivity
 import fr.coachsportif.app.domain.SetIn
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.text.Normalizer
 import java.time.Instant
 
 @Serializable
@@ -39,6 +42,8 @@ data class ExDraft(
     val targetLine: String? = null,
     val sets: List<SetDraft> = emptyList(),
     val comment: String = "",             // commentaire libre sur l'exercice (sensations, réglage machine…)
+    val added: Boolean = false,           // ajouté pendant la séance, hors programme du coach
+    val newVariant: NewVariantIn? = null, // machine jamais enregistrée : créée à l'envoi
 )
 
 @Serializable
@@ -74,6 +79,9 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     val saving = MutableStateFlow(false)
     val outcome = MutableStateFlow<SaveOutcome?>(null)
     private val json = Json { ignoreUnknownKeys = true }
+    /** Catalogue des machines/variantes connues (chargé à la demande pour « Ajouter un exercice »). */
+    val catalog = MutableStateFlow<List<VariantRow>?>(null)
+    val catalogError = MutableStateFlow<String?>(null)
 
     init {
         viewModelScope.launch {
@@ -133,11 +141,53 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         })
     }
 
-    /** Copie la charge de la série précédente (geste rapide). */
+    fun loadCatalog() = viewModelScope.launch {
+        if (catalog.value != null) return@launch
+        runCatching { repo.variants() }
+            .onSuccess { catalog.value = it; catalogError.value = null }
+            .onFailure { catalogError.value = "Liste des machines indisponible hors connexion. Tu peux créer l'exercice à la main." }
+    }
+
+    /** Ajoute une machine déjà connue, avec sa dernière référence si le réseau le permet. */
+    fun addKnownExercise(v: VariantRow) {
+        val ex = ExDraft(variantKey = v.key, name = v.name, equipment = v.equipmentVariant, added = true,
+            sets = List(3) { SetDraft() })
+        edit { d -> d.copy(exercises = d.exercises + ex) }
+        viewModelScope.launch {
+            val h = runCatching { repo.exerciseHistory(v.key) }.getOrNull() ?: return@launch
+            val ll = h.reference?.lastLogged
+            val load = ll?.sets?.firstOrNull()?.loadKg
+            edit { d -> d.copy(exercises = d.exercises.map { e ->
+                if (e.variantKey != v.key || !e.added) e else e.copy(
+                    loadBasis = h.variant.loadBasis, unit = h.variant.performanceUnit,
+                    refLine = ll?.let { "Dernière (${it.date}) : ${Fmt.sets(it.sets, h.variant.loadBasis)}" }
+                        ?: Fmt.historical(h.reference?.historicalReference)?.let { "Référence : $it" },
+                    sets = if (e.sets.none { it.done || it.load.isNotEmpty() }) List(e.sets.size) { SetDraft(load = load?.let { Fmt.num(it) } ?: "") } else e.sets,
+                )
+            }) }
+        }
+    }
+
+    /** Crée un exercice sur une machine jamais enregistrée : ses charges ne seront comparées qu'à elle-même. */
+    fun addNewExercise(name: String, equipment: String, unit: String, loadBasis: String, split: String?) {
+        val slug = Normalizer.normalize("$name $equipment", Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
+            .lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_').take(40)
+        val key = (slug.ifEmpty { "exercice" }) + "_" + System.currentTimeMillis().toString(36).takeLast(4)
+        val nv = NewVariantIn(key = key, name = name.trim(), split = split, equipmentVariant = equipment.trim().ifEmpty { null },
+            loadBasis = loadBasis, performanceUnit = unit)
+        edit { d -> d.copy(exercises = d.exercises + ExDraft(variantKey = key, name = nv.name, equipment = nv.equipmentVariant,
+            loadBasis = loadBasis, unit = unit, added = true, newVariant = nv, refLine = "Nouvelle machine : pas encore de référence",
+            sets = List(3) { SetDraft() })) }
+    }
+
+    /** Seuls les exercices ajoutés pendant la séance peuvent être retirés ; le programme du coach reste intact. */
+    fun removeAdded(ex: Int) = edit { d -> d.copy(exercises = d.exercises.filterIndexed { i, e -> !(i == ex && e.added) }) }
+
     fun editComment(ex: Int, text: String) = edit { d ->
         d.copy(exercises = d.exercises.mapIndexed { i, e -> if (i == ex) e.copy(comment = text.take(500)) else e })
     }
 
+    /** Copie la charge de la série précédente (geste rapide). */
     fun copyPreviousLoad(ex: Int, set: Int) = edit { d ->
         d.copy(exercises = d.exercises.mapIndexed { i, e ->
             if (i != ex || set == 0) e else e.copy(sets = e.sets.mapIndexed { j, s -> if (j == set) s.copy(load = e.sets[set - 1].load) else s })
@@ -155,7 +205,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 val perf = s.perf.trim().toIntOrNull() ?: return@forEach
                 val idx = if (s.isWarmup) ++warm else ++work
                 sets += SetIn(
-                    variantKey = e.variantKey, exercisePosition = i + 1, setIndex = idx, isWarmup = s.isWarmup,
+                    variantKey = e.variantKey, newVariant = e.newVariant, exercisePosition = i + 1, setIndex = idx, isWarmup = s.isWarmup,
                     loadKg = Fmt.parseDecimal(s.load),
                     reps = perf.takeIf { e.unit == "reps" || e.unit == "round_trips" },
                     steps = perf.takeIf { e.unit == "steps" },
@@ -172,6 +222,10 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 else orphanComments += "${e.name} : $comment"
             }
         }
+        // écart au programme, signalé explicitement au coach
+        val addedDone = d.exercises.filter { e -> e.added && e.sets.any { it.done && it.perf.toIntOrNull() != null } }
+        val deviation = addedDone.takeIf { it.isNotEmpty() }?.joinToString(", ", prefix = "Ajouté hors programme : ") { e ->
+            e.name + (e.equipment?.let { " ($it)" } ?: "") }
         val en = d.endurance
         val distM = Fmt.parseDecimal(en.distance)?.let { if (a.sport == "swimming") it else it * 1000 }
         val endurance = if (a.sport == "strength") null else EnduranceIn(
@@ -182,7 +236,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         return CompletionPayload(
             plannedSessionKey = a.sessionKey, date = a.date, sport = a.sport, subtype = a.subtype,
             rpe10 = d.rpe?.toDouble(), actualSessionType = en.effortType,
-            notes = (listOf(d.notes.trim()).filter { it.isNotEmpty() } + orphanComments).joinToString("\n").ifBlank { null },
+            notes = (listOfNotNull(d.notes.trim().ifEmpty { null }, deviation) + orphanComments).joinToString("\n").ifBlank { null },
             startedAt = Instant.ofEpochMilli(d.startedAtMs).toString(), endedAt = Instant.now().toString(),
             sets = sets, endurance = endurance,
         )

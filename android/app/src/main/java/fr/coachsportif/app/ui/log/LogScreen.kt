@@ -1,6 +1,10 @@
 package fr.coachsportif.app.ui.log
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -76,6 +80,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
     val saving by vm.saving.collectAsState()
     val outcome by vm.outcome.collectAsState()
     var confirm by remember { mutableStateOf(false) }
+    var adding by remember { mutableStateOf(false) }
     val ready = ui as? LogUi.Ready
 
     Scaffold(
@@ -121,7 +126,19 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                 }
                 if (s.activity.sport == "strength") {
-                    itemsIndexed(s.draft.exercises, key = { _, e -> e.variantKey }) { i, e -> ExerciseBlock(vm, i, e) }
+                    itemsIndexed(s.draft.exercises, key = { i, e -> "$i-${e.variantKey}" }) { i, e -> ExerciseBlock(vm, i, e) }
+                    item {
+                        OutlinedButton(
+                            onClick = { vm.loadCatalog(); adding = true },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Icon(Icons.Filled.Add, null); Spacer(Modifier.width(8.dp)); Text("Ajouter un exercice")
+                        }
+                        Text("Hors programme : le coach le verra comme un écart à la séance prévue.",
+                            style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.muted,
+                            modifier = Modifier.padding(horizontal = 20.dp))
+                    }
                 } else {
                     item { EnduranceBlock(vm, s.activity, s.draft.endurance) }
                 }
@@ -130,6 +147,8 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
             }
         }
     }
+
+    if (adding && ready != null) AddExerciseDialog(vm, ready.activity.subtype) { adding = false }
 
     if (confirm && ready != null) {
         val n = vm.workSetsReady(ready.draft)
@@ -170,7 +189,8 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
 private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
     val muted = LocalExtra.current.muted
     val doneCount = e.sets.count { it.done && !it.isWarmup }
-    LaneCard(if (e.priority) MaterialTheme.colorScheme.secondary else sportStyle("strength").color) {
+    LaneCard(when { e.priority -> MaterialTheme.colorScheme.secondary; e.added -> MaterialTheme.colorScheme.tertiary
+                    else -> sportStyle("strength").color }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text((if (e.priority) "🔴 " else "") + e.name, style = MaterialTheme.typography.titleLarge)
@@ -178,7 +198,12 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
             }
             Text("$doneCount/${e.sets.count { !it.isWarmup }}", style = MaterialTheme.typography.labelLarge,
                 color = if (doneCount > 0) MaterialTheme.colorScheme.primary else muted)
+            if (e.added) IconButton(onClick = { vm.removeAdded(i) }) {
+                Icon(Icons.Filled.Close, "Retirer cet exercice ajouté", tint = muted)
+            }
         }
+        if (e.added) Text("Ajouté hors programme", style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 4.dp))
         if (e.refLine != null || e.targetLine != null) {
             Spacer(Modifier.height(10.dp))
             InfoBox {
@@ -342,5 +367,71 @@ private fun LabeledField(label: String, value: String, modifier: Modifier, decim
         textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number),
+    )
+}
+
+
+@Composable
+private fun AddExerciseDialog(vm: LogViewModel, split: String?, onClose: () -> Unit) {
+    val catalog by vm.catalog.collectAsState()
+    val catalogError by vm.catalogError.collectAsState()
+    var query by remember { mutableStateOf("") }
+    var creating by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    var machine by remember { mutableStateOf("") }
+    var unit by remember { mutableStateOf("reps") }
+    var basis by remember { mutableStateOf("machine") }
+    val muted = LocalExtra.current.muted
+
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text(if (creating) "Nouvel exercice" else "Ajouter un exercice") },
+        text = {
+            if (!creating) Column {
+                OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), singleLine = true,
+                    placeholder = { Text("Rechercher (curl, tirage…)") }, shape = RoundedCornerShape(12.dp))
+                catalogError?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted, modifier = Modifier.padding(top = 8.dp)) }
+                val list = catalog.orEmpty().filter {
+                    query.isBlank() || it.name.contains(query, true) || (it.equipmentVariant ?: "").contains(query, true)
+                }.sortedWith(compareBy({ it.split != split }, { it.name }))
+                LazyColumn(Modifier.fillMaxWidth().height(320.dp).padding(top = 8.dp)) {
+                    if (catalog == null && catalogError == null) item { Text("Chargement…", color = muted) }
+                    items(list.size) { idx ->
+                        val v = list[idx]
+                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                            .clickable { vm.addKnownExercise(v); onClose() }.padding(vertical = 10.dp, horizontal = 6.dp)) {
+                            Text(v.name, style = MaterialTheme.typography.titleSmall)
+                            Text(listOfNotNull(v.equipmentVariant, Fmt.splitLabel(v.split)).joinToString("  ·  "),
+                                style = MaterialTheme.typography.bodySmall, color = muted)
+                        }
+                    }
+                }
+            } else Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(name, { name = it }, Modifier.fillMaxWidth(), singleLine = true,
+                    label = { Text("Exercice") }, placeholder = { Text("ex. Shrugs") }, shape = RoundedCornerShape(12.dp))
+                OutlinedTextField(machine, { machine = it }, Modifier.fillMaxWidth(), singleLine = true,
+                    label = { Text("Machine / matériel") }, placeholder = { Text("ex. Smith, poulie, haltères") }, shape = RoundedCornerShape(12.dp))
+                Text("On compte en", style = MaterialTheme.typography.labelMedium, color = muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("reps" to "Répétitions", "steps" to "Pas", "seconds" to "Secondes").forEach { (k, l) ->
+                        FilterChip(selected = unit == k, onClick = { unit = k }, label = { Text(l) })
+                    }
+                }
+                Text("La charge est", style = MaterialTheme.typography.labelMedium, color = muted)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("machine" to "Machine", "total" to "Barre", "per_hand" to "Par main", "bodyweight" to "Corps").forEach { (k, l) ->
+                        FilterChip(selected = basis == k, onClick = { basis = k }, label = { Text(l) })
+                    }
+                }
+                Text("Une nouvelle machine n'est jamais comparée aux autres.", style = MaterialTheme.typography.bodySmall, color = muted)
+            }
+        },
+        confirmButton = {
+            if (creating) Button(enabled = name.isNotBlank(), onClick = {
+                vm.addNewExercise(name, machine, unit, basis, split); onClose()
+            }) { Text("Ajouter") }
+            else TextButton(onClick = { creating = true }) { Text("Exercice absent de la liste") }
+        },
+        dismissButton = { TextButton(onClick = { if (creating) creating = false else onClose() }) { Text(if (creating) "Retour" else "Fermer") } },
     )
 }
