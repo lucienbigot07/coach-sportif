@@ -95,7 +95,9 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 unit = e.performanceUnit, priority = e.isPriority,
                 refLine = ll?.let { "Dernière (${it.date}) : ${Fmt.sets(it.sets, e.loadBasis)}" }
                     ?: Fmt.historical(e.reference?.historicalReference)?.let { "Référence : $it${Fmt.loadBasisLabel(e.loadBasis)}" },
-                targetLine = Fmt.futureTarget(e.reference?.futureTargetNotValidated),
+                // objectif fixé par le coach pour CETTE séance, sinon objectif de fond non validé
+                targetLine = e.notes?.takeIf { e.targetSets != null }?.let { "🎯 $it" }
+                    ?: Fmt.futureTarget(e.reference?.futureTargetNotValidated),
                 sets = List(e.targetSets ?: nSets) { SetDraft(load = load?.let { Fmt.num(it) } ?: "") },
             )
         })

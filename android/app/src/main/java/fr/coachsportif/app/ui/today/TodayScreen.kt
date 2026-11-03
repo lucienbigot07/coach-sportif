@@ -231,9 +231,9 @@ fun ReferenceLine(e: ExerciseRef) {
             Text("Référence : $it${Fmt.loadBasisLabel(e.loadBasis)}", style = MaterialTheme.typography.labelMedium)
         }
         if (e.targetSets != null) Text(
-            "Prescrit : ${e.targetSets} × ${e.targetReps ?: e.targetSteps?.let { "$it pas" } ?: e.targetSeconds?.let { "$it s" } ?: "?"}" +
-                (e.targetLoadKg?.let { " à ${Fmt.num(it)} kg" } ?: "") + (e.rirMin?.let { ", RIR $it–${e.rirMax ?: it}" } ?: ""),
+            e.notes?.let { "🎯 $it" } ?: ("🎯 ${e.targetSets} × ${e.targetReps ?: e.targetSteps?.let { "$it pas" } ?: e.targetSeconds?.let { "$it s" } ?: "?"}" +
+                (e.targetLoadKg?.let { " à ${Fmt.num(it)} kg" } ?: "") + (e.rirMin?.let { ", RIR $it–${e.rirMax ?: it}" } ?: "")),
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-        Fmt.futureTarget(e.reference?.futureTargetNotValidated)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted) }
+        else Fmt.futureTarget(e.reference?.futureTargetNotValidated)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted) }
     }
 }
