@@ -30,6 +30,17 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${cfg("coach.supabaseAnonKey")}\"")
     }
 
+    signingConfigs {
+        // Clé de DEBUG partagée (dans Git) : chaque APK compilé par GitHub s'installe par-dessus le précédent
+        // sans perdre les données locales. Ne jamais l'utiliser pour une publication Play Store.
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

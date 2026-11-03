@@ -1,0 +1,17 @@
+name: Base + serveur MCP
+on:
+  push:
+    paths: ["db/**", "mcp-server/**", "seed/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -r mcp-server/requirements-dev.txt
+      - name: Tests (Postgres local jetable)
+        working-directory: mcp-server
+        run: python -m pytest -q

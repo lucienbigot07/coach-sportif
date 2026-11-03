@@ -47,6 +47,6 @@ Aucun outil de suppression d'historique, de lecture d'un autre compte ni de ré�
 ## 6. Choix assumés / limites
 
 - Mise à jour de l'app à l'ouverture et au rafraîchissement manuel (pas de push temps réel au MVP ; Supabase Realtime possible ensuite).
-- Le serveur MCP conserve les jetons OAuth (hachés) et ta session Supabase (chiffrée Fernet) dans un SQLite sur volume persistant : une seule instance suffit pour un usage personnel.
+- Serveur MCP sans état : client DCR, code, jetons d'accès et de rafraîchissement sont des blobs scellés (Fernet, clé dérivée de `COACH_TOKEN_ENC_KEY`) contenant la session Supabase. Il survit aux redémarrages d'un hébergeur gratuit. Rafraîchissement = rotation réelle du refresh token Supabase. Révocation globale : changer la clé.
 - Connexion Android par e-mail/mot de passe Supabase (pas encore de Google Sign-In / passkeys).
 - Import Garmin, notifications, statistiques avancées : phase 2.

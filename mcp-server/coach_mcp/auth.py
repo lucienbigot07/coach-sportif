@@ -3,37 +3,38 @@
 Parcours :
 1. Claude s'enregistre (Dynamic Client Registration) puis ouvre /authorize (PKCE obligatoire, géré par le SDK).
 2. ``authorize`` redirige vers /login : l'utilisateur saisit SON e-mail/mot de passe Supabase.
-3. Le serveur obtient une session Supabase (grant password), conserve le refresh token CHIFFRÉ (Fernet),
-   puis renvoie un code d'autorisation à Claude.
-4. Claude échange le code contre un jeton MCP opaque (1 h) + refresh token (30 j, rotatif).
-5. À chaque appel d'outil : jeton MCP → utilisateur → JWT Supabase de CET utilisateur → RLS côté base.
+3. Le serveur obtient une session Supabase (grant password) et la SCELLE (chiffrée + authentifiée)
+   dans le code d'autorisation renvoyé à Claude.
+4. Claude échange le code contre un jeton d'accès scellé (≤ 1 h) + un refresh token scellé (rotatif :
+   chaque rafraîchissement consomme le refresh token Supabase, un rejeu échoue en invalid_grant).
+5. À chaque appel d'outil : jeton → utilisateur + JWT Supabase de CET utilisateur → RLS côté base.
 
-Aucune clé service_role. Seuls les e-mails de COACH_ALLOWED_EMAILS peuvent se connecter.
-Les jetons sont stockés hachés (SHA-256) dans SQLite (volume persistant de l'hébergeur).
+Sans état côté serveur (aucune base OAuth à héberger) ; aucune clé service_role ;
+seuls les e-mails de COACH_ALLOWED_EMAILS peuvent se connecter ; retours limités aux URL de Claude.
 """
 
 from __future__ import annotations
 
-import asyncio
+import base64
 import hashlib
 import html
 import json
 import secrets
-import sqlite3
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlencode
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.provider import (
     AccessToken,
     AuthorizationCode,
     AuthorizationParams,
-    AuthorizeError,
     OAuthAuthorizationServerProvider,
     RefreshToken,
+    RegistrationError,
     TokenError,
     construct_redirect_uri,
 )
@@ -100,103 +101,102 @@ class HttpSupabaseAuth:
         return await self._token("refresh_token", {"refresh_token": refresh_token})
 
 
-# ---------------------------------------------------------------- stockage
-class Store:
-    def __init__(self, path: str, enc_key: str):
-        self._db = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
-        self._db.execute("pragma journal_mode=wal")
-        self._f = Fernet(enc_key.encode() if isinstance(enc_key, str) else enc_key)
-        self._db.executescript("""
-          create table if not exists clients(client_id text primary key, info text not null);
-          create table if not exists pending(req_id text primary key, client_id text, params text, created_at int);
-          create table if not exists codes(code_hash text primary key, data text, expires_at int);
-          create table if not exists tokens(hash text primary key, kind text, client_id text, user_id text,
-                                            scopes text, resource text, expires_at int);
-          create table if not exists supa(user_id text primary key, email text, enc text, expires_at int);
-        """)
+# ---------------------------------------------------------------- jetons scellés (sans état serveur)
+class Sealer:
+    """Chiffre + authentifie (Fernet : AES-128-CBC + HMAC-SHA256, horodaté) de petits objets JSON.
 
-    def q(self, sql: str, *args: Any) -> list[tuple]:
-        return self._db.execute(sql, args).fetchall()
+    Aucun état à conserver côté serveur : client DCR, demande en cours, code, jetons d'accès et de
+    rafraîchissement sont des blobs scellés. Le serveur peut redémarrer (hébergeur gratuit qui s'endort)
+    sans déconnecter Claude. Seule la clé COACH_TOKEN_ENC_KEY doit rester stable et secrète.
+    """
 
-    def enc(self, s: str) -> str:
-        return self._f.encrypt(s.encode()).decode()
+    def __init__(self, secret: str):
+        if len(secret) < 32:
+            raise ValueError("COACH_TOKEN_ENC_KEY : au moins 32 caractères aléatoires")
+        # clé Fernet dérivée : accepte n'importe quel secret long (ex. valeur générée par l'hébergeur)
+        self._f = Fernet(base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest()))
 
-    def dec(self, s: str) -> str:
-        return self._f.decrypt(s.encode()).decode()
+    def seal(self, kind: str, data: dict[str, Any]) -> str:
+        return kind + "." + self._f.encrypt(json.dumps({"k": kind, **data}).encode()).decode()
 
-    def purge(self) -> None:
-        now = int(time.time())
-        self.q("delete from pending where created_at < ?", now - PENDING_TTL)
-        self.q("delete from codes where expires_at < ?", now)
-        self.q("delete from tokens where expires_at < ?", now)
+    def open(self, kind: str, token: str, ttl: int | None = None) -> dict[str, Any] | None:
+        if not token or not token.startswith(kind + "."):
+            return None
+        try:
+            d = json.loads(self._f.decrypt(token[len(kind) + 1:].encode(), ttl=ttl))
+        except (InvalidToken, ValueError):
+            return None
+        return d if d.get("k") == kind else None
+
+
+ALLOWED_REDIRECTS = re.compile(
+    r"^(https://claude\.ai/api/mcp/auth_callback|https://claude\.com/api/mcp/auth_callback"
+    r"|http://(localhost|127\.0\.0\.1)(:\d+)?/callback)$")
 
 
 # ---------------------------------------------------------------- provider OAuth
 class CoachOAuthProvider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken, AccessToken]):
-    def __init__(self, store: Store, supabase: SupabaseAuthClient, base_url: str, allowed_emails: set[str]):
-        self.store = store
+    def __init__(self, sealer: Sealer, supabase: SupabaseAuthClient, base_url: str, allowed_emails: set[str]):
+        self.sealer = sealer
         self.supabase = supabase
         self.base_url = base_url.rstrip("/")
         self.resource = self.base_url + "/mcp"
         self.allowed = {e.strip().lower() for e in allowed_emails if e.strip()}
         if not self.allowed:
             raise ValueError("COACH_ALLOWED_EMAILS est obligatoire")
-        self._locks: dict[str, asyncio.Lock] = {}
         self._failures: dict[str, int] = {}
+        self._used_codes: dict[str, float] = {}  # usage unique des codes (mémoire, durée de vie 5 min)
 
-    # -- clients (DCR)
-    async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
-        rows = self.store.q("select info from clients where client_id = ?", client_id)
-        return OAuthClientInformationFull.model_validate_json(rows[0][0]) if rows else None
-
+    # -- clients (DCR sans état : l'identifiant client EST l'enregistrement scellé)
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
-        self.store.q("insert or replace into clients values (?, ?)", client_info.client_id, client_info.model_dump_json())
+        uris = [str(u) for u in (client_info.redirect_uris or [])]
+        if not uris or not all(ALLOWED_REDIRECTS.match(u) for u in uris):
+            raise RegistrationError("invalid_redirect_uri", "seuls les retours vers Claude sont acceptés")
+        client_info.client_id = self.sealer.seal("cl", {"info": client_info.model_dump(mode="json", exclude={"client_id"})})
+
+    async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
+        d = self.sealer.open("cl", client_id)
+        return OAuthClientInformationFull.model_validate({**d["info"], "client_id": client_id}) if d else None
 
     # -- /authorize → page de connexion
     async def authorize(self, client: OAuthClientInformationFull, params: AuthorizationParams) -> str:
-        self.store.purge()
-        req_id = secrets.token_urlsafe(32)
-        self.store.q("insert into pending values (?, ?, ?, ?)", req_id, client.client_id,
-                     params.model_dump_json(), int(time.time()))
-        return f"{self.base_url}/login?{urlencode({'req': req_id})}"
+        req = self.sealer.seal("rq", {"c": client.client_id, "p": params.model_dump(mode="json")})
+        return f"{self.base_url}/login?{urlencode({'req': req})}"
 
     async def login_page(self, request: Request) -> Response:
-        req_id = request.query_params.get("req") or (await request.form()).get("req")
-        rows = self.store.q("select client_id, params, created_at from pending where req_id = ?", req_id or "")
-        if not rows or rows[0][2] < time.time() - PENDING_TTL:
+        form = await request.form() if request.method == "POST" else {}
+        req = request.query_params.get("req") or str(form.get("req", ""))
+        d = self.sealer.open("rq", req, ttl=PENDING_TTL)
+        if not d:
             return HTMLResponse(_page("Demande expirée", "<p>Relancez la connexion depuis Claude.</p>"), status_code=400)
-        client_id, params_json, _ = rows[0]
-        params = AuthorizationParams.model_validate_json(params_json)
+        client_id = d["c"]
+        params = AuthorizationParams.model_validate(d["p"])
         client = await self.get_client(client_id)
+        key = hashlib.sha256(req.encode()).hexdigest()
         error = ""
         if request.method == "POST":
-            form = await request.form()
             email = str(form.get("email", "")).strip().lower()
-            if self._failures.get(req_id, 0) >= 5:
+            if self._failures.get(key, 0) >= 5:
                 return HTMLResponse(_page("Trop d'essais", "<p>Relancez la connexion depuis Claude.</p>"), status_code=429)
             try:
                 if email not in self.allowed:
                     raise AuthFailed("not_allowed")
                 sess = await self.supabase.password_login(email, str(form.get("password", "")))
             except AuthFailed:
-                self._failures[req_id] = self._failures.get(req_id, 0) + 1
+                self._failures[key] = self._failures.get(key, 0) + 1
                 error = "<p class=err>Identifiants refusés.</p>"
             else:
-                self._save_supabase(sess)
-                self.store.q("delete from pending where req_id = ?", req_id)
-                code = secrets.token_urlsafe(32)
-                ac = AuthorizationCode(code=code, scopes=params.scopes or [SCOPE], expires_at=time.time() + CODE_TTL,
-                                       client_id=client_id, code_challenge=params.code_challenge,
-                                       redirect_uri=params.redirect_uri,
-                                       redirect_uri_provided_explicitly=params.redirect_uri_provided_explicitly,
-                                       resource=params.resource or self.resource, subject=sess.user_id)
-                self.store.q("insert into codes values (?, ?, ?)", _h(code), ac.model_dump_json(), int(ac.expires_at))
+                code = self.sealer.seal("co", {
+                    "c": client_id, "s": params.scopes or [SCOPE], "ch": params.code_challenge,
+                    "ru": str(params.redirect_uri), "rx": params.redirect_uri_provided_explicitly,
+                    "r": params.resource or self.resource, "sub": sess.user_id,
+                    "sb": {"a": sess.access_token, "r": sess.refresh_token, "e": sess.expires_at}})
                 return RedirectResponse(construct_redirect_uri(str(params.redirect_uri), code=code, state=params.state),
                                         status_code=302)
         name = html.escape((client.client_name if client else None) or "Claude")
         body = f"""{error}<p><b>{name}</b> demande l'accès à vos données Coach Sportif
           (lecture des séances, publication des plannings validés).</p>
-          <form method=post><input type=hidden name=req value="{html.escape(req_id)}">
+          <form method=post><input type=hidden name=req value="{html.escape(req)}">
           <label>E-mail<input name=email type=email autocomplete=username required></label>
           <label>Mot de passe<input name=password type=password autocomplete=current-password required></label>
           <button>Autoriser</button></form>"""
@@ -205,78 +205,63 @@ class CoachOAuthProvider(OAuthAuthorizationServerProvider[AuthorizationCode, Ref
 
     # -- codes & jetons
     async def load_authorization_code(self, client: OAuthClientInformationFull, authorization_code: str) -> AuthorizationCode | None:
-        rows = self.store.q("select data, expires_at from codes where code_hash = ?", _h(authorization_code))
-        if not rows or rows[0][1] < time.time():
+        d = self.sealer.open("co", authorization_code, ttl=CODE_TTL)
+        if not d or d["c"] != client.client_id or authorization_code in self._used_codes:
             return None
-        ac = AuthorizationCode.model_validate_json(rows[0][0])
-        return ac if ac.client_id == client.client_id else None
+        return AuthorizationCode(code=authorization_code, scopes=d["s"], expires_at=time.time() + CODE_TTL, client_id=d["c"],
+                                 code_challenge=d["ch"], redirect_uri=d["ru"], redirect_uri_provided_explicitly=d["rx"],
+                                 resource=d["r"], subject=d["sub"])
 
-    def _issue(self, client_id: str, user_id: str, scopes: list[str], resource: str | None) -> OAuthToken:
-        access, refresh = secrets.token_urlsafe(40), secrets.token_urlsafe(48)
-        now = int(time.time())
-        self.store.q("insert into tokens values (?, 'access', ?, ?, ?, ?, ?)", _h(access), client_id, user_id,
-                     " ".join(scopes), resource, now + ACCESS_TTL)
-        self.store.q("insert into tokens values (?, 'refresh', ?, ?, ?, ?, ?)", _h(refresh), client_id, user_id,
-                     " ".join(scopes), resource, now + REFRESH_TTL)
-        return OAuthToken(access_token=access, token_type="Bearer", expires_in=ACCESS_TTL, refresh_token=refresh,
-                          scope=" ".join(scopes))
+    def _issue(self, client_id: str, sub: str, scopes: list[str], resource: str | None, sb: dict[str, Any]) -> OAuthToken:
+        exp = min(int(sb["e"]), int(time.time()) + ACCESS_TTL)
+        access = self.sealer.seal("at", {"c": client_id, "sub": sub, "s": scopes, "r": resource, "x": exp, "sba": sb["a"]})
+        refresh = self.sealer.seal("rt", {"c": client_id, "sub": sub, "s": scopes, "r": resource, "sbr": sb["r"]})
+        return OAuthToken(access_token=access, token_type="Bearer", expires_in=max(60, exp - int(time.time())),
+                          refresh_token=refresh, scope=" ".join(scopes))
 
     async def exchange_authorization_code(self, client: OAuthClientInformationFull, authorization_code: AuthorizationCode) -> OAuthToken:
-        deleted = self.store.q("delete from codes where code_hash = ? returning code_hash", _h(authorization_code.code))
-        if not deleted:  # usage unique
+        now = time.time()
+        self._used_codes = {c: t for c, t in self._used_codes.items() if t > now - CODE_TTL}
+        if authorization_code.code in self._used_codes:
             raise TokenError("invalid_grant", "code déjà utilisé")
-        return self._issue(client.client_id, authorization_code.subject or "", authorization_code.scopes,
-                           authorization_code.resource or self.resource)
+        self._used_codes[authorization_code.code] = now
+        d = self.sealer.open("co", authorization_code.code, ttl=CODE_TTL)
+        if not d:
+            raise TokenError("invalid_grant", "code expiré")
+        return self._issue(client.client_id, d["sub"], d["s"], d["r"], d["sb"])
 
     async def load_refresh_token(self, client: OAuthClientInformationFull, refresh_token: str) -> RefreshToken | None:
-        rows = self.store.q("select client_id, user_id, scopes, resource, expires_at from tokens where hash = ? and kind = 'refresh'",
-                            _h(refresh_token))
-        if not rows or rows[0][0] != client.client_id or rows[0][4] < time.time():
+        d = self.sealer.open("rt", refresh_token, ttl=REFRESH_TTL)
+        if not d or d["c"] != client.client_id:
             return None
-        c, u, s, r, e = rows[0]
-        return RefreshToken(token=refresh_token, client_id=c, scopes=s.split(), expires_at=e, resource=r, subject=u)
+        return RefreshToken(token=refresh_token, client_id=d["c"], scopes=d["s"], resource=d["r"], subject=d["sub"])
 
     async def exchange_refresh_token(self, client: OAuthClientInformationFull, refresh_token: RefreshToken, scopes: list[str]) -> OAuthToken:
-        self.store.q("delete from tokens where hash = ?", _h(refresh_token.token))  # rotation
-        return self._issue(client.client_id, refresh_token.subject or "", scopes or refresh_token.scopes, refresh_token.resource)
+        d = self.sealer.open("rt", refresh_token.token, ttl=REFRESH_TTL)
+        try:  # Supabase invalide l'ancien refresh token : rotation réelle, un jeton rejoué échoue
+            s = await self.supabase.refresh(d["sbr"]) if d else None
+        except AuthFailed:
+            s = None
+        if s is None or s.user_id != d["sub"]:
+            raise TokenError("invalid_grant", "session expirée ou révoquée")
+        return self._issue(client.client_id, s.user_id, scopes or d["s"], d["r"],
+                           {"a": s.access_token, "r": s.refresh_token, "e": s.expires_at})
 
     async def load_access_token(self, token: str) -> AccessToken | None:
-        rows = self.store.q("select client_id, user_id, scopes, resource, expires_at from tokens where hash = ? and kind = 'access'",
-                            _h(token))
-        if not rows or rows[0][4] < time.time():
+        d = self.sealer.open("at", token, ttl=ACCESS_TTL + 60)
+        if not d or d["x"] < time.time():
             return None
-        c, u, s, r, e = rows[0]
-        return AccessToken(token=token, client_id=c, scopes=s.split(), expires_at=e, resource=r, subject=u)
+        return AccessToken(token=token, client_id=d["c"], scopes=d["s"], expires_at=d["x"], resource=d["r"],
+                           subject=d["sub"], claims={"sba": d["sba"]})
 
     async def revoke_token(self, token: AccessToken | RefreshToken) -> None:
-        self.store.q("delete from tokens where hash = ?", _h(token.token))
-
-    # -- session Supabase de l'utilisateur
-    def _save_supabase(self, s: SupabaseSession) -> None:
-        self.store.q("insert or replace into supa values (?, ?, ?, ?)", s.user_id, s.email,
-                     self.store.enc(json.dumps({"a": s.access_token, "r": s.refresh_token})), s.expires_at)
-
-    async def identity_for(self, user_id: str) -> Identity:
-        lock = self._locks.setdefault(user_id, asyncio.Lock())
-        async with lock:
-            rows = self.store.q("select email, enc, expires_at from supa where user_id = ?", user_id)
-            if not rows:
-                raise AuthFailed("no_supabase_session")
-            email, enc, exp = rows[0]
-            tok = json.loads(self.store.dec(enc))
-            if exp - 60 < time.time():
-                s = await self.supabase.refresh(tok["r"])
-                if s.user_id != user_id:
-                    raise AuthFailed("user_mismatch")
-                self._save_supabase(s)
-                tok = {"a": s.access_token}
-            return Identity(user_id=user_id, supabase_access_token=tok["a"])
+        return None  # jetons scellés : expiration courte ; révocation globale = changer COACH_TOKEN_ENC_KEY
 
     async def current_identity(self) -> Identity:
         at = get_access_token()
-        if at is None or not at.subject:
+        if at is None or not at.subject or not at.claims:
             raise AuthFailed("unauthenticated")
-        return await self.identity_for(at.subject)
+        return Identity(user_id=at.subject, supabase_access_token=at.claims["sba"])
 
 
 def _page(title: str, body: str) -> str:

@@ -5,8 +5,7 @@ Variables d'environnement (voir .env.example ; aucune valeur secrète dans Git) 
   SUPABASE_URL            https://<projet>.supabase.co
   SUPABASE_ANON_KEY       clé publique « publishable/anon » (le RLS protège les données)
   COACH_ALLOWED_EMAILS    e-mails autorisés à connecter Claude, séparés par des virgules
-  COACH_TOKEN_ENC_KEY     clé Fernet (chiffre les refresh tokens Supabase stockés)
-  COACH_STATE_DB          chemin SQLite persistant (défaut /data/coach-mcp.sqlite3)
+  COACH_TOKEN_ENC_KEY     clé Fernet (scelle codes et jetons ; la changer déconnecte Claude)
 Mode développement local, sans OAuth (refusé hors 127.0.0.1) :
   COACH_DEV_MODE=1  COACH_DEV_USER_ID=<uuid>  COACH_PG_DSN=postgresql://…
 """
@@ -22,20 +21,19 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from .auth import SCOPE, CoachOAuthProvider, HttpSupabaseAuth, Store, SupabaseAuthClient
+from .auth import SCOPE, CoachOAuthProvider, HttpSupabaseAuth, Sealer, SupabaseAuthClient
 from .backend import Backend, Identity, PsqlBackend, SupabaseBackend
 from .tools import build_server
 
 
 def create_app(*, public_url: str, backend: Backend, supabase_auth: SupabaseAuthClient, allowed_emails: set[str],
-               enc_key: str, state_db: str) -> Starlette:
-    store = Store(state_db, enc_key)
-    provider = CoachOAuthProvider(store, supabase_auth, public_url, allowed_emails)
+               enc_key: str) -> Starlette:
+    provider = CoachOAuthProvider(Sealer(enc_key), supabase_auth, public_url, allowed_emails)
     auth = AuthSettings(
         issuer_url=public_url,
         resource_server_url=provider.resource,
         client_registration_options=ClientRegistrationOptions(enabled=True, valid_scopes=[SCOPE], default_scopes=[SCOPE]),
-        revocation_options=RevocationOptions(enabled=True),
+        revocation_options=RevocationOptions(enabled=False),
         validate_token_resource=True,
     )
     mcp = build_server(backend, provider.current_identity, auth_server_provider=provider, auth=auth)
@@ -82,7 +80,6 @@ def _from_env() -> Starlette:
         supabase_auth=HttpSupabaseAuth(supabase_url, anon),
         allowed_emails=set(os.environ["COACH_ALLOWED_EMAILS"].split(",")),
         enc_key=os.environ["COACH_TOKEN_ENC_KEY"],
-        state_db=os.environ.get("COACH_STATE_DB", "/data/coach-mcp.sqlite3"),
     )
 
 

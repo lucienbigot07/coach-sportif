@@ -1,5 +1,15 @@
 # Déploiement — de zéro à « Claude publie, l'app affiche »
 
+> **Parcours 100 % téléphone** (celui suivi en conversation) :
+> 1. Supabase : projet + utilisateur ; coller `db/supabase_1_installation.sql` puis `db/supabase_2_import_historique.sql` dans le SQL Editor.
+> 2. GitHub : dépôt privé ; GitHub Actions compile l'APK (`.github/workflows/android.yml`) → artefact `coach-sportif-apk` à télécharger sur le téléphone.
+>    Variables d'Actions (publiques) : `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
+> 3. Render : *New → Blueprint* sur le dépôt (`render.yaml`) → renseigner `COACH_PUBLIC_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `COACH_ALLOWED_EMAILS` ; `COACH_TOKEN_ENC_KEY` est généré par Render.
+>    Offre gratuite : le service s'endort après inactivité, le premier appel peut prendre ~1 min (Claude peut échouer une fois : relancer). Le serveur est sans état : un redémarrage ne déconnecte pas Claude.
+> 4. Claude : connecteur personnalisé → `https://<service>.onrender.com/mcp`.
+>
+> Le parcours « ordinateur » ci-dessous reste valable.
+
 Compte ~1 h. Les étapes 1 à 3 demandent **tes** comptes ; aucune valeur secrète ne va dans Git.
 
 ## 1. Supabase (base + authentification)
@@ -28,7 +38,6 @@ Claude se connecte depuis le cloud Anthropic (sorties depuis `160.79.104.0/21`) 
 cd mcp-server
 cp fly.toml.example fly.toml           # ajuste le nom de l'app
 fly launch --no-deploy --copy-config
-fly volumes create coach_state --region cdg --size 1
 fly secrets set \
   COACH_PUBLIC_URL=https://<app>.fly.dev \
   SUPABASE_URL=https://<projet>.supabase.co \
@@ -40,7 +49,7 @@ curl https://<app>.fly.dev/healthz        # {"ok": true}
 curl -i https://<app>.fly.dev/mcp          # 401 + WWW-Authenticate: Bearer resource_metadata=…
 ```
 
-Variables : voir `mcp-server/.env.example`. Un seul conteneur suffit (état OAuth dans SQLite sur le volume).
+Variables : voir `mcp-server/.env.example`. Le serveur est sans état (jetons scellés) : ni volume ni base OAuth.
 
 ## 3. Ajouter le connecteur dans Claude
 

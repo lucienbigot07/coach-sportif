@@ -26,16 +26,22 @@ CALLBACK = "https://claude.ai/api/mcp/auth_callback"
 
 
 class FakeSupabaseAuth:
+    """Imite Supabase : refresh token à usage unique (rotation)."""
     def __init__(self):
         self.refreshes = 0
+        self.valid = {"rt-1"}
 
     async def password_login(self, email, password):
         if (email, password) != ("athlete@test.local", "bon-mot-de-passe"):
             raise AuthFailed("bad")
-        return SupabaseSession(USER_A.user_id, email, "jwt-1", "rt-1", int(time.time()) + 30)  # expire vite → refresh
+        return SupabaseSession(USER_A.user_id, email, "jwt-1", "rt-1", int(time.time()) + 3600)
 
     async def refresh(self, rt):
+        if rt not in self.valid:
+            raise AuthFailed("refresh token réutilisé")
+        self.valid.discard(rt)
         self.refreshes += 1
+        self.valid.add(f"rt-{self.refreshes + 1}")
         return SupabaseSession(USER_A.user_id, "athlete@test.local", f"jwt-{self.refreshes + 1}", f"rt-{self.refreshes + 1}",
                                int(time.time()) + 3600)
 
@@ -45,21 +51,32 @@ def server(backend, tmp_path_factory):
     s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
     base = f"http://127.0.0.1:{port}"
     fake = FakeSupabaseAuth()
-    app = create_app(public_url=base, backend=backend, supabase_auth=fake, allowed_emails={"athlete@test.local"},
-                     enc_key=Fernet.generate_key().decode(), state_db=str(tmp_path_factory.mktemp("st") / "s.db"))
-    srv = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
-    t = threading.Thread(target=srv.run, daemon=True); t.start()
-    for _ in range(100):
-        try:
-            requests.get(base + "/healthz", timeout=0.5); break
-        except requests.ConnectionError:
-            time.sleep(0.05)
-    yield base, fake
-    srv.should_exit = True; t.join(5)
+    key = Fernet.generate_key().decode()
+
+    def start():
+        app = create_app(public_url=base, backend=backend, supabase_auth=fake, allowed_emails={"athlete@test.local"},
+                         enc_key=key)
+        srv = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
+        t = threading.Thread(target=srv.run, daemon=True); t.start()
+        for _ in range(200):
+            try:
+                requests.get(base + "/healthz", timeout=0.5); break
+            except requests.ConnectionError:
+                time.sleep(0.05)
+        return srv, t
+
+    state = {"srv": start()}
+
+    def restart():  # simule un hébergeur gratuit qui s'endort / redémarre
+        srv, t = state["srv"]; srv.should_exit = True; t.join(5)
+        state["srv"] = start()
+
+    yield base, fake, restart
+    srv, t = state["srv"]; srv.should_exit = True; t.join(5)
 
 
 def test_oauth_puis_outils(server):
-    base, fake = server
+    base, fake, restart = server
     s = requests.Session(); s.trust_env = False
     # 1. sans jeton → 401 + découverte
     r = s.post(base + "/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
@@ -115,7 +132,9 @@ def test_oauth_puis_outils(server):
     assert n == 12 and not day.is_error
     keys = {a["session_key"] for a in day.structured_content["activities"]}
     assert {"20261102_run", "20261102_quad"} <= keys
-    assert fake.refreshes == 1  # session Supabase expirée → rafraîchie côté serveur, transparente pour Claude
+    restart()  # le jeton reste valide après redémarrage : aucun état perdu
+    n_after, _ = asyncio.run(use(tok["access_token"]))
+    assert n_after == 12
 
     # 8. refresh token rotatif ; jeton invalide refusé
     new = s.post(meta["token_endpoint"], data={"grant_type": "refresh_token", "refresh_token": tok["refresh_token"],
@@ -128,4 +147,8 @@ def test_oauth_puis_outils(server):
                headers={"Accept": "application/json, text/event-stream", "Authorization": "Bearer inventé"})
     assert r.status_code == 401
     n2, _ = asyncio.run(use(new["access_token"]))
-    assert n2 == 12
+    assert n2 == 12 and fake.refreshes == 1
+    # inscription d'un client avec un retour hors Claude → refusé
+    evil = s.post(meta["registration_endpoint"], json={"redirect_uris": ["https://pirate.example/cb"],
+                  "token_endpoint_auth_method": "none", "grant_types": ["authorization_code"], "response_types": ["code"]})
+    assert evil.status_code == 400

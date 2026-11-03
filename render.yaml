@@ -1,0 +1,22 @@
+# Render Blueprint — connecteur MCP Coach Sportif (Dashboard Render > New > Blueprint > ce dépôt)
+services:
+  - type: web
+    name: coach-sportif-mcp
+    runtime: docker
+    rootDir: mcp-server
+    dockerfilePath: ./Dockerfile
+    region: frankfurt
+    plan: free            # gratuit : s'endort après inactivité (1er appel lent) ; "starter" = toujours éveillé, payant
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: COACH_TOKEN_ENC_KEY
+        generateValue: true   # secret aléatoire généré par Render, jamais dans Git
+      - key: COACH_PUBLIC_URL
+        sync: false           # https://coach-sportif-mcp.onrender.com (affiché après création)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: COACH_ALLOWED_EMAILS
+        sync: false
