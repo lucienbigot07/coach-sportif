@@ -1,0 +1,97 @@
+{
+ "variant": {
+  "name": "Fentes marchées",
+  "notes": "nouvelle référence vs 42 kg ; base de charge total/par main non documentée",
+  "split": "quadriceps",
+  "load_basis": "unknown",
+  "variant_key": "walking_lunges_44",
+  "performance_unit": "steps",
+  "equipment_variant": "exécution et équipement identiques au 02/11"
+ },
+ "sessions": [
+  {
+   "date": "2026-11-02",
+   "source": "user_report",
+   "work_sets": [
+    {
+     "steps": 32,
+     "load_kg": 44.0,
+     "set_index": 1,
+     "load_basis": "unknown"
+    },
+    {
+     "steps": 33,
+     "load_kg": 44.0,
+     "set_index": 2,
+     "load_basis": "unknown"
+    },
+    {
+     "steps": 33,
+     "load_kg": 44.0,
+     "set_index": 3,
+     "load_basis": "unknown"
+    }
+   ],
+   "session_notes": "réellement réalisé, pas séance légère ; fentes nouvelle référence ; inclut abduction additionnelle",
+   "session_rpe_10": 6.0,
+   "planned_session_key": "20261102_quad",
+   "completed_activity_id": "1e2cd165-a82d-471f-a664-6dae4aabe56b"
+  }
+ ],
+ "reference": {
+  "last_logged": {
+   "date": "2026-11-02",
+   "sets": [
+    {
+     "steps": 32,
+     "load_kg": 44.0,
+     "set_index": 1,
+     "load_basis": "unknown"
+    },
+    {
+     "steps": 33,
+     "load_kg": 44.0,
+     "set_index": 2,
+     "load_basis": "unknown"
+    },
+    {
+     "steps": 33,
+     "load_kg": 44.0,
+     "set_index": 3,
+     "load_basis": "unknown"
+    }
+   ],
+   "source": "user_report",
+   "completed_activity_id": "1e2cd165-a82d-471f-a664-6dae4aabe56b"
+  },
+  "historical_reference": {
+   "notes": "nouvelle référence vs 42 kg ; base de charge total/par main non documentée",
+   "source": "historical_dossier",
+   "reference": {
+    "sets": [
+     {
+      "steps": 32,
+      "load_kg": 44
+     },
+     {
+      "steps": 33,
+      "load_kg": 44
+     },
+     {
+      "steps": 33,
+      "load_kg": 44
+     }
+    ]
+   },
+   "reference_type": "reference_confirmed",
+   "last_complete_session_date": "2026-11-02"
+  },
+  "future_target_not_validated": {
+   "sets": 3,
+   "load_kg": 44,
+   "condition": "bonne technique et journée dédiée",
+   "steps_each": 33
+  }
+ },
+ "same_name_other_variants": []
+}

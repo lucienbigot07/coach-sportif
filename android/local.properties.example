@@ -1,0 +1,5 @@
+# Copier en local.properties (ignoré par Git)
+sdk.dir=/chemin/vers/Android/Sdk
+# URL et clé PUBLIQUE (publishable/anon) du projet Supabase. Ce n'est pas un secret : le RLS protège les données.
+coach.supabaseUrl=https://VOTRE-PROJET.supabase.co
+coach.supabaseAnonKey=sb_publishable_xxx

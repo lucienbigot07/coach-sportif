@@ -1,0 +1,1634 @@
+{
+  "dataset_version": "2026-11-03-v1",
+  "as_of": "2026-11-03",
+  "time_of_day_context": "après le bilan du matin et avant toute séance du mardi",
+  "timezone": "Europe/Paris",
+  "provenance": {
+    "primary": "DOSSIER_COMPLET_COACH_SPORTIF_2026-11-03.md",
+    "secondary": "INSTRUCTIONS_PROJET_COACH_SPORTIF.md",
+    "note": "Données manuelles documentées, non export Garmin complet ; aucune séance réalisée mardi 3 au dernier bilan utilisateur."
+  },
+  "profile": {
+    "age_years_as_of_2026_11_03": 24,
+    "sex_reported": "homme",
+    "height_cm": 176,
+    "current_weight_kg": null,
+    "weight_history_range_2026_kg_approx": [
+      89,
+      98
+    ],
+    "equipment": [
+      "Samsung Galaxy S25 Ultra",
+      "Garmin Epix Pro 2",
+      "Basic-Fit",
+      "élastiques SmartWorkout"
+    ],
+    "sports": [
+      "musculation",
+      "course à pied",
+      "football",
+      "natation",
+      "HYROX",
+      "vélo/triathlon occasionnels"
+    ],
+    "strength_sessions_per_week_target": 4,
+    "football_training_usual_days": [
+      "mardi",
+      "vendredi"
+    ],
+    "football_training_this_week": "mardi 03/11 non confirmé ; vendredi 06/11 non confirmé",
+    "past_injuries": "antécédents de claquages/fragilités des ischio-jambiers, notamment novembre 2025 ; pas de blessure actuelle confirmée",
+    "coaching_principle": "maximiser le travail assimilable, pas la fatigue cumulée",
+    "nutrition_preferences": [
+      "pas de petit-déjeuner habituellement",
+      "thé sans sucre le matin ~1 L",
+      "poisson peu apprécié sauf saumon/thon",
+      "évite de manger juste avant courir ou football",
+      "whey utilisée par le passé ; créatine non confirmée"
+    ],
+    "preferences": [
+      "coach exigeant non complaisant",
+      "séances précises avec décision motivée",
+      "4 muscu sauf ajustement justifié",
+      "S1/S2/S3 et une priorité 🔴",
+      "QCM brefs 2 à 4 questions utiles",
+      "planning très visuel jour par jour + emojis + statuts + synthèse",
+      "différencier machine et variante",
+      "ne pas inventer de séances",
+      "Conseil à cinq rôles si « passe ça au conseil »"
+    ]
+  },
+  "goals": [
+    {
+      "id": "10k_dec_2026",
+      "sport": "running",
+      "target_distance_m": 10000,
+      "target_duration_seconds": 2700,
+      "pace_s_per_km": 270,
+      "target_date_window": "fin décembre 2026",
+      "status": "ambitieux_non_validé",
+      "priority": "majeure"
+    },
+    {
+      "id": "race_maine_libre",
+      "sport": "running",
+      "event_date": "2026-11-21",
+      "target": "course sérieuse pour calibrer les allures",
+      "registration_status": "confirmed"
+    },
+    {
+      "id": "hyrox_2027",
+      "sport": "hyrox",
+      "target": "participer à HYROX Paris ou Lyon en 2027",
+      "status": "préparation",
+      "priority": "majeure"
+    },
+    {
+      "id": "half_marathon_2027",
+      "sport": "running",
+      "target": "semi-marathon mars/avril 2027",
+      "status": "projet"
+    },
+    {
+      "id": "body_comp",
+      "sport": "general",
+      "target": "perte de poids progressive tout en conservant performance et force",
+      "status": "en_cours"
+    }
+  ],
+  "garmin_snapshot": {
+    "recorded_date": "2026-11-03",
+    "device": "Epix Pro Gen 2",
+    "max_hr_bpm_reported": 188,
+    "rest_hr_bpm_historic_approx": 55,
+    "lactate_threshold_estimate": {
+      "hr_bpm": 176,
+      "pace_sec_per_km": 286,
+      "power_w": 438,
+      "relative_power_w_per_kg": 4.9,
+      "is_estimate": true
+    },
+    "hr_zone_method_selected": "pourcentage FC au seuil lactique",
+    "watch_setting_scope_confirmed": false,
+    "zones_reported_bpm_approx": {
+      "Z1": [
+        100,
+        114
+      ],
+      "Z2": [
+        116,
+        136
+      ],
+      "Z3": [
+        137,
+        160
+      ],
+      "Z4": [
+        162,
+        178
+      ],
+      "Z5_theoretical": [
+        180,
+        201
+      ]
+    },
+    "caveats": [
+      "ne jamais chercher à atteindre 201 bpm malgré la plage Z5 théorique supérieure à FCmax 188",
+      "ne pas imposer la zone Z2 116–136 comme unique définition du footing facile",
+      "le poids implicite 438/4,90 n’est pas une pesée",
+      "recontrôler périodiquement après courses utiles"
+    ]
+  },
+  "events": [
+    {
+      "id": "corps_nuds_night",
+      "name": "Corps-Nuds By Night",
+      "date": "2026-11-07",
+      "distance_m": 16000,
+      "category": "trail_nocturne",
+      "registration_status": "envisaged_unconfirmed",
+      "strategy": "endurance contrôlée, sans record, attention match lendemain"
+    },
+    {
+      "id": "maine_libre_10k",
+      "name": "10 km du Maine Libre",
+      "date": "2026-11-21",
+      "distance_m": 10000,
+      "registration_status": "confirmed",
+      "strategy": "course de référence"
+    },
+    {
+      "id": "corrida_dec",
+      "name": "Corrida fin décembre",
+      "date": null,
+      "date_window": "fin décembre 2026",
+      "distance_m": 10000,
+      "registration_status": "course_non_choisie",
+      "goal_time_seconds": 2700
+    },
+    {
+      "id": "hyrox_2027",
+      "name": "HYROX Paris / Lyon",
+      "date": null,
+      "date_window": "2027",
+      "registration_status": "dates/inscriptions non déterminées dans le dossier"
+    },
+    {
+      "id": "half_marathon_2027",
+      "name": "Semi-marathon 2027",
+      "date": null,
+      "date_window": "mars/avril 2027",
+      "registration_status": "non connu"
+    }
+  ],
+  "football_known_match_dates": [
+    "2026-11-08",
+    "2026-11-15",
+    "2026-11-29",
+    "2026-12-06",
+    "2026-12-13"
+  ],
+  "coach_policy": {
+    "weekly_strength_splits": [
+      "dos_biceps",
+      "quadriceps",
+      "pecs_triceps",
+      "ischios_fessiers"
+    ],
+    "working_sets_typical": 3,
+    "warmup_separate": true,
+    "priority_exercise_symbol": "🔴",
+    "update_only_on_new_evidence": true,
+    "session_planned_never_equals_completed": true,
+    "two_to_four_qcm_on_relevant_feedback": true,
+    "no_interpolation_of_missing_sets": true,
+    "council_roles": [
+      "optimiste",
+      "contradicteur",
+      "réaliste",
+      "stratège",
+      "maître de cérémonie"
+    ]
+  },
+  "exercise_references": [
+    {
+      "exercise_variant_id": "bench_barbell",
+      "split": "pecs_triceps",
+      "name": "Développé couché barre",
+      "equipment_variant": "barre libre",
+      "load_basis": "total",
+      "reference": {
+        "sets": [
+          [
+            80,
+            10
+          ],
+          [
+            80,
+            10
+          ],
+          [
+            80,
+            10
+          ]
+        ],
+        "load_unit": "kg",
+        "rep_unit": "repetitions"
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-19",
+      "notes": "distinct du développé machine"
+    },
+    {
+      "exercise_variant_id": "developpe_machine_unspecified",
+      "split": "pecs_triceps",
+      "name": "Développé machine",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "best_observed_set": [
+          90,
+          10
+        ],
+        "sets_complete": null,
+        "load_unit": "kg"
+      },
+      "reference_type": "best_set_only",
+      "last_complete_session_date_if_known": null,
+      "notes": "ancien meilleur essai, non 3 séries prouvées"
+    },
+    {
+      "exercise_variant_id": "chest_press",
+      "split": "pecs_triceps",
+      "name": "Chest Press",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            50,
+            10
+          ],
+          [
+            50,
+            10
+          ],
+          [
+            50,
+            10
+          ]
+        ],
+        "load_unit": "kg"
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg": 50,
+        "reps_each": 12
+      }
+    },
+    {
+      "exercise_variant_id": "pec_fly",
+      "split": "pecs_triceps",
+      "name": "Pec Fly",
+      "equipment_variant": "même machine à identifier",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            79,
+            10
+          ],
+          [
+            79,
+            10
+          ],
+          [
+            79,
+            10
+          ]
+        ],
+        "load_unit": "kg"
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "try_next_machine_increment": true
+      },
+      "notes": "79 x10x3 facile, monter seulement si même machine"
+    },
+    {
+      "exercise_variant_id": "triceps_high_cable",
+      "split": "pecs_triceps",
+      "name": "Triceps poulie haute",
+      "equipment_variant": "poulie haute",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            22.5,
+            10
+          ],
+          [
+            22.5,
+            10
+          ],
+          [
+            22.5,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "load_kg": 22.5,
+        "sets": 3,
+        "reps_each": 12
+      }
+    },
+    {
+      "exercise_variant_id": "triceps_low_cable_pos2",
+      "split": "pecs_triceps",
+      "name": "Triceps poulie basse position 2",
+      "equipment_variant": "poulie basse position 2",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            24.5,
+            10
+          ],
+          [
+            24.5,
+            10
+          ],
+          [
+            24.5,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "load_kg": 24.5,
+        "sets": 3,
+        "reps_each": 12
+      }
+    },
+    {
+      "exercise_variant_id": "standing_lateral_abs",
+      "split": "pecs_triceps",
+      "name": "Abdos latéraux debout",
+      "equipment_variant": "machine/charge à confirmer",
+      "load_basis": "unknown",
+      "reference": {
+        "sets": [
+          [
+            32,
+            10
+          ],
+          [
+            32,
+            10
+          ],
+          [
+            32,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "notes": "non réalisés le 19 octobre"
+    },
+    {
+      "exercise_variant_id": "squat_barbell",
+      "split": "quadriceps",
+      "name": "Squat barre",
+      "equipment_variant": "barre",
+      "load_basis": "total",
+      "reference": {
+        "sets": [
+          [
+            50,
+            10
+          ],
+          [
+            50,
+            10
+          ],
+          [
+            50,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02",
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg": 50,
+        "reps_each": 12,
+        "condition": "jambes fraîches"
+      }
+    },
+    {
+      "exercise_variant_id": "high_squat_tkl",
+      "split": "quadriceps",
+      "name": "High Squat TKL",
+      "equipment_variant": "machine TKL High Squat",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            40,
+            10
+          ],
+          [
+            40,
+            10
+          ],
+          [
+            40,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02",
+      "notes": "ne pas confondre avec Perfect Squat/Smith/autres machines"
+    },
+    {
+      "exercise_variant_id": "walking_lunges_44",
+      "split": "quadriceps",
+      "name": "Fentes marchées",
+      "equipment_variant": "exécution et équipement identiques au 02/11",
+      "load_basis": "load_basis_unknown",
+      "reference": {
+        "sets": [
+          {
+            "load_kg": 44,
+            "steps": 32
+          },
+          {
+            "load_kg": 44,
+            "steps": 33
+          },
+          {
+            "load_kg": 44,
+            "steps": 33
+          }
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02",
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg": 44,
+        "steps_each": 33,
+        "condition": "bonne technique et journée dédiée"
+      },
+      "notes": "nouvelle référence vs 42 kg ; base de charge total/par main non documentée",
+      "priority_symbol": "🔴"
+    },
+    {
+      "exercise_variant_id": "leg_extension_unilateral",
+      "split": "quadriceps",
+      "name": "Leg Extension unilatérale",
+      "equipment_variant": "machine unilatérale",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            59,
+            10
+          ],
+          [
+            59,
+            10
+          ],
+          [
+            59,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02"
+    },
+    {
+      "exercise_variant_id": "adductors",
+      "split": "quadriceps",
+      "name": "Adducteurs",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ]
+        ],
+        "best_isolated_set": [
+          73,
+          10
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg": 73,
+        "reps_each": 10
+      },
+      "notes": "73x10 = meilleur essai isolé, pas 3 séries validées"
+    },
+    {
+      "exercise_variant_id": "calves_leg_press",
+      "split": "quadriceps",
+      "name": "Mollets à la Leg Press",
+      "equipment_variant": "Leg Press",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            134,
+            10
+          ],
+          [
+            134,
+            10
+          ],
+          [
+            134,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02"
+    },
+    {
+      "exercise_variant_id": "sled_push_tkl",
+      "split": "quadriceps",
+      "name": "Sled Push",
+      "equipment_variant": "TKL",
+      "load_basis": "machine",
+      "reference": {
+        "load_kg": 120,
+        "round_trips": 10,
+        "distance_each_m": null
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "notes": "longueur inconnue ; non comparable directement HYROX"
+    },
+    {
+      "exercise_variant_id": "abs_tek",
+      "split": "ischios_fessiers",
+      "name": "Abdos machine TEK",
+      "equipment_variant": "TEK",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            36,
+            10
+          ],
+          [
+            36,
+            10
+          ],
+          [
+            36,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02",
+      "notes": "fait dans séance quadriceps du 02/11, apparaît aussi dans historique ischios"
+    },
+    {
+      "exercise_variant_id": "abductors",
+      "split": "ischios_fessiers",
+      "name": "Abducteurs",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-11-02",
+      "notes": "fait aussi dans la séance quadriceps du 02/11"
+    },
+    {
+      "exercise_variant_id": "rdl_dumbbells",
+      "split": "ischios_fessiers",
+      "name": "RDL haltères",
+      "equipment_variant": "deux haltères",
+      "load_basis": "per_hand",
+      "reference": {
+        "sets": [
+          [
+            30,
+            10
+          ],
+          [
+            30,
+            10
+          ],
+          [
+            30,
+            10
+          ]
+        ],
+        "load_unit": "kg par main"
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-22",
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg_per_hand": 30,
+        "reps_each": 12
+      },
+      "priority_symbol": "🔴"
+    },
+    {
+      "exercise_variant_id": "swiss_ball_ham",
+      "split": "ischios_fessiers",
+      "name": "Ischios sur ballon",
+      "equipment_variant": "ballon",
+      "load_basis": "bodyweight",
+      "reference": {
+        "sets_seconds": [
+          40,
+          40,
+          40
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-22"
+    },
+    {
+      "exercise_variant_id": "hip_thrust",
+      "split": "ischios_fessiers",
+      "name": "Hip Thrust",
+      "equipment_variant": "équipement non précisé",
+      "load_basis": "unknown",
+      "reference": {
+        "last_session_sets": [
+          [
+            60,
+            10
+          ],
+          [
+            60,
+            10
+          ],
+          [
+            60,
+            10
+          ]
+        ],
+        "best_full_sets": [
+          [
+            60,
+            12
+          ],
+          [
+            60,
+            12
+          ],
+          [
+            60,
+            12
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-22",
+      "notes": "meilleure séance n’est pas la dernière"
+    },
+    {
+      "exercise_variant_id": "prone_leg_curl",
+      "split": "ischios_fessiers",
+      "name": "Prone Leg Curl",
+      "equipment_variant": "machine Prone Leg Curl",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            23,
+            10
+          ],
+          [
+            23,
+            10
+          ],
+          [
+            23,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-22",
+      "notes": "distinct du Back Extension"
+    },
+    {
+      "exercise_variant_id": "back_extension_glutes",
+      "split": "ischios_fessiers",
+      "name": "Back Extension fessiers",
+      "equipment_variant": "machine Back Extension",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            34,
+            10
+          ],
+          [
+            34,
+            10
+          ],
+          [
+            34,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    },
+    {
+      "exercise_variant_id": "pullups_bodyweight",
+      "split": "dos_biceps",
+      "name": "Tractions normales",
+      "equipment_variant": "poids du corps",
+      "load_basis": "bodyweight",
+      "reference": {
+        "best_full_sets_reps": [
+          7,
+          7,
+          7
+        ],
+        "other_sets_reps": [
+          7,
+          7,
+          5
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "future_target_not_validated": {
+        "sets": 3,
+        "reps_each": 8,
+        "prerequisite": "valider 7/7/7"
+      }
+    },
+    {
+      "exercise_variant_id": "vertical_row_machine_66",
+      "split": "dos_biceps",
+      "name": "Tirage vertical",
+      "equipment_variant": "machine du 7 octobre, identité à préciser",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ],
+          [
+            66,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-07",
+      "notes": "NE PAS mélanger avec machine habituelle 120 kg"
+    },
+    {
+      "exercise_variant_id": "vertical_row_machine_120",
+      "split": "dos_biceps",
+      "name": "Tirage vertical",
+      "equipment_variant": "AUTRE machine habituelle distincte",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            120,
+            10
+          ],
+          [
+            120,
+            10
+          ],
+          [
+            120,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null,
+      "notes": "référence historique distincte de 66 kg"
+    },
+    {
+      "exercise_variant_id": "horizontal_row",
+      "split": "dos_biceps",
+      "name": "Tirage horizontal",
+      "equipment_variant": "machine du 7 octobre",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            66,
+            10
+          ],
+          [
+            73,
+            10
+          ],
+          [
+            73,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-07",
+      "future_target_not_validated": {
+        "sets": 3,
+        "load_kg": 73,
+        "reps_each": 10
+      }
+    },
+    {
+      "exercise_variant_id": "pullover",
+      "split": "dos_biceps",
+      "name": "Pull-over",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            27,
+            10
+          ],
+          [
+            27,
+            10
+          ],
+          [
+            27,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    },
+    {
+      "exercise_variant_id": "rear_delt",
+      "split": "dos_biceps",
+      "name": "Rear Delt",
+      "equipment_variant": "machine non précisée",
+      "load_basis": "machine",
+      "reference": {
+        "sets": [
+          [
+            52,
+            10
+          ],
+          [
+            52,
+            10
+          ],
+          [
+            52,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    },
+    {
+      "exercise_variant_id": "lateral_raise",
+      "split": "dos_biceps",
+      "name": "Élévations latérales",
+      "equipment_variant": "charge par main non explicitée",
+      "load_basis": "unknown",
+      "reference": {
+        "sets": [
+          [
+            6.8,
+            10
+          ],
+          [
+            6.8,
+            10
+          ],
+          [
+            6.8,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    },
+    {
+      "exercise_variant_id": "biceps_curl_machine_37",
+      "split": "dos_biceps",
+      "name": "Biceps curl",
+      "equipment_variant": "machine ou variante non précisée",
+      "load_basis": "unknown",
+      "reference": {
+        "warmup_set": [
+          20,
+          10
+        ],
+        "working_sets": [
+          [
+            37.5,
+            8
+          ],
+          [
+            37.5,
+            6
+          ]
+        ],
+        "third_working_set": null
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": "2026-10-07",
+      "notes": "pas 3 séries à 37,5kg validées ; échauffement distinct"
+    },
+    {
+      "exercise_variant_id": "preacher_curl",
+      "split": "dos_biceps",
+      "name": "Curl pupitre",
+      "equipment_variant": "pupitre",
+      "load_basis": "unknown",
+      "reference": {
+        "sets": [
+          [
+            32.5,
+            10
+          ],
+          [
+            32.5,
+            10
+          ],
+          [
+            32.5,
+            10
+          ]
+        ]
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    },
+    {
+      "exercise_variant_id": "dumbbell_curl",
+      "split": "dos_biceps",
+      "name": "Curl haltères",
+      "equipment_variant": "haltères",
+      "load_basis": "per_hand",
+      "reference": {
+        "sets": [
+          [
+            16,
+            10
+          ],
+          [
+            16,
+            10
+          ],
+          [
+            16,
+            10
+          ]
+        ],
+        "load_unit": "kg par main"
+      },
+      "reference_type": "reference_confirmed",
+      "last_complete_session_date_if_known": null
+    }
+  ],
+  "completed_endurance_activities": [
+    {
+      "id": "run_2026_09_10",
+      "date": "2026-09-10",
+      "sport": "running",
+      "distance_m": 5000,
+      "duration_seconds": 1878,
+      "avg_hr_bpm": 139,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "allure déclarée 6:15/km approximative"
+    },
+    {
+      "id": "run_2026_09_22",
+      "date": "2026-09-22",
+      "sport": "running",
+      "distance_m": 4480,
+      "duration_seconds": null,
+      "avg_hr_bpm": 136,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "allure approximative 6:00/km ; temps exact non fourni"
+    },
+    {
+      "id": "run_2026_09_30",
+      "date": "2026-09-30",
+      "sport": "running",
+      "distance_m": 5000,
+      "duration_seconds": 1524,
+      "avg_hr_bpm": 164,
+      "ascent_m": 56,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "course avec dénivelé, 25:24 ; RPE rapporté 7–8/10",
+      "rpe_range_reported": [
+        7,
+        8
+      ]
+    },
+    {
+      "id": "run_2026_10_26",
+      "date": "2026-10-26",
+      "sport": "running",
+      "distance_m": 5120,
+      "duration_seconds": null,
+      "avg_hr_bpm": 132,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "durée non documentée"
+    },
+    {
+      "id": "slow_2026_10_26",
+      "date": "2026-10-26",
+      "sport": "running_or_walk_recorded",
+      "distance_m": 1440,
+      "duration_seconds": null,
+      "avg_hr_bpm": null,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "montre enregistrée marche à 7:08/km, utilisateur la considère comme footing très lent"
+    },
+    {
+      "id": "run_a_2026_10_27",
+      "date": "2026-10-27",
+      "sport": "running",
+      "distance_m": 5010,
+      "duration_seconds": 1981,
+      "avg_hr_bpm": 142,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report"
+    },
+    {
+      "id": "run_b_2026_10_27",
+      "date": "2026-10-27",
+      "sport": "running",
+      "distance_m": 5100,
+      "duration_seconds": 1687,
+      "avg_hr_bpm": 161,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "pause entre deux courses inconnue"
+    },
+    {
+      "id": "walk_2026_10_27",
+      "date": "2026-10-27",
+      "sport": "walking",
+      "distance_m": 2210,
+      "duration_seconds": null,
+      "avg_hr_bpm": null,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report"
+    },
+    {
+      "id": "swim_2026_10_27",
+      "date": "2026-10-27",
+      "sport": "swimming",
+      "distance_m": 600,
+      "duration_seconds": null,
+      "avg_hr_bpm": null,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report"
+    },
+    {
+      "id": "swim_2026_10_20",
+      "date": "2026-10-20",
+      "sport": "swimming",
+      "distance_m": 500,
+      "duration_seconds": 1163,
+      "avg_hr_bpm": 122,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report"
+    },
+    {
+      "id": "football_2026_10_20",
+      "date": "2026-10-20",
+      "sport": "football",
+      "distance_m": 8830,
+      "duration_seconds": 4039,
+      "avg_hr_bpm": 158,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "entraînement, classé seuil / aérobie élevée Garmin"
+    },
+    {
+      "id": "run_2026_10_29",
+      "date": "2026-10-29",
+      "sport": "running",
+      "distance_m": 6020,
+      "duration_seconds": 1842,
+      "avg_hr_bpm": 159,
+      "ascent_m": 18,
+      "rpe_10": 6,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "arrêt par manque de temps, pas épuisement"
+    },
+    {
+      "id": "walk_2026_10_29",
+      "date": "2026-10-29",
+      "sport": "walking",
+      "distance_m": 1180,
+      "duration_seconds": 883,
+      "avg_hr_bpm": 111,
+      "ascent_m": null,
+      "rpe_10": null,
+      "status": "completed",
+      "provenance": "user_report"
+    },
+    {
+      "id": "run_2026_11_02",
+      "date": "2026-11-02",
+      "sport": "running",
+      "distance_m": 5000,
+      "duration_seconds": 1442,
+      "avg_hr_bpm": 166,
+      "ascent_m": 21,
+      "rpe_10": 6,
+      "status": "completed",
+      "provenance": "user_report",
+      "notes": "RP Garmin ; séance initialement prévue facile mais effectivement soutenue ; pouvait peut-être courir 2–3 km de plus : auto-estimation non vérifiée",
+      "planned_session_type": "easy",
+      "actual_session_type": "sustained",
+      "avg_pace_seconds_per_km_reported": 288
+    }
+  ],
+  "completed_strength_activities": [
+    {
+      "id": "strength_quad_2026_11_02",
+      "date": "2026-11-02",
+      "split": "quadriceps",
+      "status": "completed",
+      "rpe_10": 6,
+      "work_sets_count": 21,
+      "exercise_count": 7,
+      "exercises": [
+        {
+          "exercise_variant_id": "squat_barbell",
+          "sets": [
+            {
+              "load_kg": 50,
+              "reps": 10
+            },
+            {
+              "load_kg": 50,
+              "reps": 10
+            },
+            {
+              "load_kg": 50,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "high_squat_tkl",
+          "sets": [
+            {
+              "load_kg": 40,
+              "reps": 10
+            },
+            {
+              "load_kg": 40,
+              "reps": 10
+            },
+            {
+              "load_kg": 40,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "walking_lunges_44",
+          "sets": [
+            {
+              "load_kg": 44,
+              "steps": 32
+            },
+            {
+              "load_kg": 44,
+              "steps": 33
+            },
+            {
+              "load_kg": 44,
+              "steps": 33
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "leg_extension_unilateral",
+          "sets": [
+            {
+              "load_kg": 59,
+              "reps": 10
+            },
+            {
+              "load_kg": 59,
+              "reps": 10
+            },
+            {
+              "load_kg": 59,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "calves_leg_press",
+          "sets": [
+            {
+              "load_kg": 134,
+              "reps": 10
+            },
+            {
+              "load_kg": 134,
+              "reps": 10
+            },
+            {
+              "load_kg": 134,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "abs_tek",
+          "sets": [
+            {
+              "load_kg": 36,
+              "reps": 10
+            },
+            {
+              "load_kg": 36,
+              "reps": 10
+            },
+            {
+              "load_kg": 36,
+              "reps": 10
+            }
+          ]
+        },
+        {
+          "exercise_variant_id": "abductors",
+          "sets": [
+            {
+              "load_kg": 66,
+              "reps": 10
+            },
+            {
+              "load_kg": 66,
+              "reps": 10
+            },
+            {
+              "load_kg": 66,
+              "reps": 10
+            }
+          ]
+        }
+      ],
+      "notes": "réellement réalisé, pas séance légère ; fentes nouvelle référence ; inclut abduction additionnelle"
+    }
+  ],
+  "historical_benchmarks": [
+    {
+      "id": "intervals_4x1k_sep2026",
+      "date": "2026-09",
+      "type": "intervals",
+      "work_1000m_seconds": [
+        262.8,
+        264.3,
+        264.2,
+        263.8
+      ],
+      "recovery_seconds": "parfois >90",
+      "status": "completed"
+    },
+    {
+      "id": "intervals_5x1k_19oct",
+      "date": "2026-10-19",
+      "type": "intervals",
+      "target": "5×1000m 4:27–4:30/km, récup 1:30",
+      "status": "planned_not_completed"
+    },
+    {
+      "id": "10k_old_pb",
+      "date": null,
+      "distance_m": 10000,
+      "duration_seconds": 3170,
+      "status": "historical_completed",
+      "note": "ancien 10km 52:50"
+    },
+    {
+      "id": "half_historic",
+      "date": null,
+      "distance_m": 21097.5,
+      "duration_seconds": 7380,
+      "status": "historical_completed",
+      "note": "semi-marathon 2h03 tranquille"
+    },
+    {
+      "id": "run_16k_jul",
+      "date": "2026-07",
+      "distance_m": 16000,
+      "duration_seconds": 5160,
+      "status": "historical_completed",
+      "note": "16km en 1h26 selon ancien historique"
+    },
+    {
+      "id": "triathlon_S_2026_06_27",
+      "date": "2026-06-27",
+      "status": "completed",
+      "swim_user_estimate_m": 750,
+      "swim_garmin_recorded_m": 564,
+      "bike_legs": [
+        {
+          "distance_m": 10030,
+          "duration_s": 1769,
+          "ascent_m": 107
+        },
+        {
+          "distance_m": 10040,
+          "duration_s": 1535,
+          "ascent_m": 80
+        }
+      ],
+      "run": {
+        "distance_m": 5000,
+        "duration_s": 1711,
+        "ascent_m": 44
+      },
+      "t1_s": 88,
+      "t2_s": 43,
+      "note": "vélo séparé par erreur de bouton ; natation environ 750 m en ~30 minutes, Garmin sous-comptait",
+      "swim_garmin_duration_s": 1793,
+      "swim_user_estimated_duration_s_approx": 1800
+    }
+  ],
+  "weekly_plan": {
+    "week_start": "2026-11-02",
+    "week_end": "2026-11-08",
+    "state": "validated_by_user",
+    "completed_scope_as_of": "2026-11-03_early",
+    "activities": [
+      {
+        "id": "20261102_run",
+        "date": "2026-11-02",
+        "sport": "running",
+        "title": "5 km faciles (prescription), courus plus vite",
+        "status": "completed",
+        "details": {
+          "planned_distance_m": 5000,
+          "planned_pace_s_per_km_range": [
+            360,
+            395
+          ],
+          "actual_activity_id": "run_2026_11_02"
+        }
+      },
+      {
+        "id": "20261102_quad",
+        "date": "2026-11-02",
+        "sport": "strength",
+        "title": "Quadriceps / Mollets / Abdos",
+        "status": "completed",
+        "details": {
+          "actual_activity_id": "strength_quad_2026_11_02"
+        }
+      },
+      {
+        "id": "20261103_swim",
+        "date": "2026-11-03",
+        "sport": "swimming",
+        "title": "Piscine facile",
+        "status": "planned",
+        "details": {
+          "distance_m_range": [
+            500,
+            600
+          ],
+          "duration_min_range": [
+            20,
+            25
+          ],
+          "intensity": "facile"
+        }
+      },
+      {
+        "id": "20261103_back",
+        "date": "2026-11-03",
+        "sport": "strength",
+        "title": "Dos/Biceps",
+        "status": "planned",
+        "details": {
+          "duration_min_range": [
+            45,
+            60
+          ],
+          "split": "dos_biceps",
+          "load": "habituelle",
+          "rir_range": [
+            1,
+            2
+          ],
+          "references_see": "exercise_references ; exercices précis à confirmer dans séance construite"
+        }
+      },
+      {
+        "id": "20261103_football",
+        "date": "2026-11-03",
+        "sport": "football",
+        "title": "Football vers 19h30",
+        "status": "pending_confirmation",
+        "details": {
+          "provisional_time_local": "19:30"
+        },
+        "notes": "ne pas considérer comme entraînement confirmé"
+      },
+      {
+        "id": "20261104_run",
+        "date": "2026-11-04",
+        "sport": "running",
+        "title": "Endurance facile",
+        "status": "planned",
+        "details": {
+          "distance_m": 10000,
+          "pace_s_per_km_range": [
+            360,
+            395
+          ],
+          "rpe_10_range": [
+            3,
+            4
+          ],
+          "if_tired_distance_m_range": [
+            6000,
+            8000
+          ]
+        },
+        "notes": "pas de finish rapide"
+      },
+      {
+        "id": "20261104_chest",
+        "date": "2026-11-04",
+        "sport": "strength",
+        "title": "Pecs/Triceps",
+        "status": "planned",
+        "details": {
+          "split": "pecs_triceps",
+          "intensity": "normale progressive"
+        }
+      },
+      {
+        "id": "20261105_ham",
+        "date": "2026-11-05",
+        "sport": "strength",
+        "title": "Ischios/Fessiers + Abdos",
+        "status": "planned",
+        "details": {
+          "split": "ischios_fessiers",
+          "sets_per_exercise_approx": 2,
+          "intensity": "légère",
+          "avoid": [
+            "RDL lourd",
+            "échec musculaire"
+          ]
+        }
+      },
+      {
+        "id": "20261106_swim",
+        "date": "2026-11-06",
+        "sport": "swimming",
+        "title": "Piscine récupération active",
+        "status": "planned",
+        "details": {
+          "distance_m_range": [
+            500,
+            600
+          ],
+          "duration_min_range": [
+            20,
+            25
+          ]
+        },
+        "notes": "pas de fractionné ; foot vendredi pas confirmé"
+      },
+      {
+        "id": "20261107_trail",
+        "date": "2026-11-07",
+        "sport": "running",
+        "title": "Corps-Nuds By Night 16 km",
+        "status": "pending_confirmation",
+        "details": {
+          "distance_m": 16000,
+          "effort": "contrôlé"
+        },
+        "notes": "participation envisagée seulement"
+      },
+      {
+        "id": "20261108_match",
+        "date": "2026-11-08",
+        "sport": "football",
+        "title": "Match de football",
+        "status": "planned",
+        "details": {
+          "duration_min": null
+        },
+        "notes": "temps de jeu à adapter récupération du trail ; aucune blessure présente affirmée"
+      }
+    ],
+    "forecast_summary": {
+      "running_distance_km_if_trail_and_wed_completed": 31,
+      "strength_sessions_planned": 4,
+      "strength_sessions_completed_as_of": 1,
+      "swim_sessions_planned": 2,
+      "football_training_pending_confirmation_count": 1,
+      "football_match_planned_count": 1,
+      "note": "prévu ≠ réalisé ; 31 km tient compte du trail hypothétique"
+    }
+  },
+  "unconfirmed_questions": [
+    "foot du mardi 3 novembre confirmé ?",
+    "trail Corps-Nuds le 7 novembre : inscription/participation confirmée ?",
+    "foot du vendredi 6 novembre prévu ?",
+    "zones Garmin générales ou spécifiques course à pied ?",
+    "poids actuel inconnu",
+    "résultats depuis le matin du 3 novembre non connus"
+  ]
+}

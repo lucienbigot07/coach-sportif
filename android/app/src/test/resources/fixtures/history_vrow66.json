@@ -1,0 +1,93 @@
+{
+ "variant": {
+  "name": "Tirage vertical",
+  "notes": "NE PAS mélanger avec machine habituelle 120 kg",
+  "split": "dos_biceps",
+  "load_basis": "machine",
+  "variant_key": "vertical_row_machine_66",
+  "performance_unit": "reps",
+  "equipment_variant": "machine du 7 octobre, identité à préciser"
+ },
+ "sessions": [
+  {
+   "date": "2026-11-03",
+   "source": "app_logged",
+   "work_sets": [
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 1,
+     "load_basis": "machine"
+    },
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 2,
+     "load_basis": "machine"
+    },
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 3,
+     "load_basis": "machine"
+    }
+   ],
+   "session_rpe_10": 7.0,
+   "planned_session_key": "20261103_back",
+   "completed_activity_id": "23b32750-5334-4a39-ac50-c0dbb34c647e"
+  }
+ ],
+ "reference": {
+  "last_logged": {
+   "date": "2026-11-03",
+   "sets": [
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 1,
+     "load_basis": "machine"
+    },
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 2,
+     "load_basis": "machine"
+    },
+    {
+     "reps": 10,
+     "load_kg": 66.0,
+     "set_index": 3,
+     "load_basis": "machine"
+    }
+   ],
+   "source": "app_logged",
+   "completed_activity_id": "23b32750-5334-4a39-ac50-c0dbb34c647e"
+  },
+  "historical_reference": {
+   "notes": "NE PAS mélanger avec machine habituelle 120 kg",
+   "source": "historical_dossier",
+   "reference": {
+    "sets": [
+     [
+      66,
+      10
+     ],
+     [
+      66,
+      10
+     ],
+     [
+      66,
+      10
+     ]
+    ]
+   },
+   "reference_type": "reference_confirmed",
+   "last_complete_session_date": "2026-10-07"
+  },
+  "future_target_not_validated": null
+ },
+ "same_name_other_variants": [
+  "vertical_row_machine_120"
+ ]
+}

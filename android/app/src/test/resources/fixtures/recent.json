@@ -1,0 +1,529 @@
+{
+ "note": "Seules les séances réellement déclarées (app_logged, user_report, historical_dossier) figurent ici.",
+ "sessions": [
+  {
+   "date": "2026-11-03",
+   "sport": "strength",
+   "rpe_10": 7.0,
+   "source": "app_logged",
+   "status": "completed",
+   "subtype": "dos_biceps",
+   "version": 1,
+   "exercises": [
+    {
+     "name": "Tirage vertical",
+     "notes": "NE PAS mélanger avec machine habituelle 120 kg",
+     "split": "dos_biceps",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "vertical_row_machine_66",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "machine du 7 octobre, identité à préciser"
+    }
+   ],
+   "logged_at": "2026-11-03T13:47:38.938179+01:00",
+   "planned_target": {
+    "load": "habituelle",
+    "rir_range": [
+     1,
+     2
+    ],
+    "references_see": "exercise_references ; exercices précis à confirmer dans séance construite",
+    "duration_min_range": [
+     45,
+     60
+    ]
+   },
+   "work_sets_count": 3,
+   "planned_session_key": "20261103_back",
+   "completed_activity_id": "23b32750-5334-4a39-ac50-c0dbb34c647e"
+  },
+  {
+   "key": "run_2026_11_02",
+   "date": "2026-11-02",
+   "notes": "RP Garmin ; séance initialement prévue facile mais effectivement soutenue ; pouvait peut-être courir 2–3 km de plus : auto-estimation non vérifiée",
+   "sport": "running",
+   "rpe_10": 6.0,
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 166,
+    "ascent_m": 21,
+    "distance_m": 5000.0,
+    "duration_s": 1442,
+    "pace_s_per_km": 288.4
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "planned_target": {
+    "distance_m": 5000,
+    "pace_s_per_km_range": [
+     360,
+     395
+    ]
+   },
+   "actual_session_type": "sustained",
+   "planned_session_key": "20261102_run",
+   "planned_session_type": "easy",
+   "completed_activity_id": "9b630a71-ea11-448c-bd6d-829a292882e6"
+  },
+  {
+   "key": "strength_quad_2026_11_02",
+   "date": "2026-11-02",
+   "notes": "réellement réalisé, pas séance légère ; fentes nouvelle référence ; inclut abduction additionnelle",
+   "sport": "strength",
+   "rpe_10": 6.0,
+   "source": "user_report",
+   "status": "completed",
+   "subtype": "quadriceps",
+   "version": 1,
+   "exercises": [
+    {
+     "name": "Squat barre",
+     "split": "quadriceps",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 50.0,
+       "set_index": 1,
+       "load_basis": "total"
+      },
+      {
+       "reps": 10,
+       "load_kg": 50.0,
+       "set_index": 2,
+       "load_basis": "total"
+      },
+      {
+       "reps": 10,
+       "load_kg": 50.0,
+       "set_index": 3,
+       "load_basis": "total"
+      }
+     ],
+     "load_basis": "total",
+     "variant_key": "squat_barbell",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "barre"
+    },
+    {
+     "name": "High Squat TKL",
+     "notes": "ne pas confondre avec Perfect Squat/Smith/autres machines",
+     "split": "quadriceps",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 40.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 40.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 40.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "high_squat_tkl",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "machine TKL High Squat"
+    },
+    {
+     "name": "Fentes marchées",
+     "notes": "nouvelle référence vs 42 kg ; base de charge total/par main non documentée",
+     "split": "quadriceps",
+     "work_sets": [
+      {
+       "steps": 32,
+       "load_kg": 44.0,
+       "set_index": 1,
+       "load_basis": "unknown"
+      },
+      {
+       "steps": 33,
+       "load_kg": 44.0,
+       "set_index": 2,
+       "load_basis": "unknown"
+      },
+      {
+       "steps": 33,
+       "load_kg": 44.0,
+       "set_index": 3,
+       "load_basis": "unknown"
+      }
+     ],
+     "load_basis": "unknown",
+     "variant_key": "walking_lunges_44",
+     "warmup_sets": [],
+     "performance_unit": "steps",
+     "equipment_variant": "exécution et équipement identiques au 02/11"
+    },
+    {
+     "name": "Leg Extension unilatérale",
+     "split": "quadriceps",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 59.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 59.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 59.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "leg_extension_unilateral",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "machine unilatérale"
+    },
+    {
+     "name": "Mollets à la Leg Press",
+     "split": "quadriceps",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 134.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 134.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 134.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "calves_leg_press",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "Leg Press"
+    },
+    {
+     "name": "Abdos machine TEK",
+     "notes": "fait dans séance quadriceps du 02/11, apparaît aussi dans historique ischios",
+     "split": "ischios_fessiers",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 36.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 36.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 36.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "abs_tek",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "TEK"
+    },
+    {
+     "name": "Abducteurs",
+     "notes": "fait aussi dans la séance quadriceps du 02/11",
+     "split": "ischios_fessiers",
+     "work_sets": [
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 1,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 2,
+       "load_basis": "machine"
+      },
+      {
+       "reps": 10,
+       "load_kg": 66.0,
+       "set_index": 3,
+       "load_basis": "machine"
+      }
+     ],
+     "load_basis": "machine",
+     "variant_key": "abductors",
+     "warmup_sets": [],
+     "performance_unit": "reps",
+     "equipment_variant": "machine non précisée"
+    }
+   ],
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "planned_target": {},
+   "work_sets_count": 21,
+   "planned_session_key": "20261102_quad",
+   "completed_activity_id": "1e2cd165-a82d-471f-a664-6dae4aabe56b"
+  },
+  {
+   "key": "run_2026_10_29",
+   "date": "2026-10-29",
+   "notes": "arrêt par manque de temps, pas épuisement",
+   "sport": "running",
+   "rpe_10": 6.0,
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 159,
+    "ascent_m": 18,
+    "distance_m": 6020.0,
+    "duration_s": 1842,
+    "pace_s_per_km": 306.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "6bf387d6-4c21-47d1-aa3f-d1bc7dd0ec8f"
+  },
+  {
+   "key": "walk_2026_10_29",
+   "date": "2026-10-29",
+   "sport": "walking",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 111,
+    "distance_m": 1180.0,
+    "duration_s": 883,
+    "pace_s_per_km": 748.3
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "bad774fe-7e0c-4c75-a158-d49a1d5ec0df"
+  },
+  {
+   "key": "run_a_2026_10_27",
+   "date": "2026-10-27",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 142,
+    "distance_m": 5010.0,
+    "duration_s": 1981,
+    "pace_s_per_km": 395.4
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "312cc298-6f53-4cd8-8830-8f7407b2e36b"
+  },
+  {
+   "key": "run_b_2026_10_27",
+   "date": "2026-10-27",
+   "notes": "pause entre deux courses inconnue",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 161,
+    "distance_m": 5100.0,
+    "duration_s": 1687,
+    "pace_s_per_km": 330.8
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "5e25cb84-ae4f-497b-a538-6a823aceb6be"
+  },
+  {
+   "key": "walk_2026_10_27",
+   "date": "2026-10-27",
+   "sport": "walking",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "distance_m": 2210.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "8f8d53f0-bd16-4e3f-a9fc-f605820a77f4"
+  },
+  {
+   "key": "swim_2026_10_27",
+   "date": "2026-10-27",
+   "sport": "swimming",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "distance_m": 600.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "db9cae0f-b7e6-452b-b2df-405e780fab70"
+  },
+  {
+   "key": "run_2026_10_26",
+   "date": "2026-10-26",
+   "notes": "durée non documentée",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 132,
+    "distance_m": 5120.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "edd228bc-f82f-4d2c-83fd-b00e032885f2"
+  },
+  {
+   "key": "slow_2026_10_26",
+   "date": "2026-10-26",
+   "notes": "montre enregistrée marche à 7:08/km, utilisateur la considère comme footing très lent",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "subtype": "recorded_as_walk",
+   "version": 1,
+   "endurance": {
+    "distance_m": 1440.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "781dfda4-bbe4-4581-97bf-c40765f6caa5"
+  },
+  {
+   "key": "swim_2026_10_20",
+   "date": "2026-10-20",
+   "sport": "swimming",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 122,
+    "distance_m": 500.0,
+    "duration_s": 1163,
+    "pace_s_per_km": 2326.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "67684b80-f610-4e69-a9ef-e5e4f0f4038f"
+  },
+  {
+   "key": "football_2026_10_20",
+   "date": "2026-10-20",
+   "notes": "entraînement, classé seuil / aérobie élevée Garmin",
+   "sport": "football",
+   "source": "user_report",
+   "status": "completed",
+   "subtype": "training",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 158,
+    "distance_m": 8830.0,
+    "duration_s": 4039,
+    "pace_s_per_km": 457.4
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "1d75e3e4-c048-45ca-8c1f-2c190b17d897"
+  },
+  {
+   "key": "run_2026_09_30",
+   "date": "2026-09-30",
+   "notes": "course avec dénivelé, 25:24 ; RPE rapporté 7–8/10",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 164,
+    "ascent_m": 56,
+    "distance_m": 5000.0,
+    "duration_s": 1524,
+    "pace_s_per_km": 304.8
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "rpe_range_reported": [
+    7,
+    8
+   ],
+   "completed_activity_id": "1c296abd-b15e-4531-8842-701df6cdcff0"
+  },
+  {
+   "key": "run_2026_09_22",
+   "date": "2026-09-22",
+   "notes": "allure approximative 6:00/km ; temps exact non fourni",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 136,
+    "distance_m": 4480.0
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "666ad174-1397-4a91-a590-e014d6c74c29"
+  },
+  {
+   "key": "run_2026_09_10",
+   "date": "2026-09-10",
+   "notes": "allure déclarée 6:15/km approximative",
+   "sport": "running",
+   "source": "user_report",
+   "status": "completed",
+   "version": 1,
+   "endurance": {
+    "avg_hr": 139,
+    "distance_m": 5000.0,
+    "duration_s": 1878,
+    "pace_s_per_km": 375.6
+   },
+   "logged_at": "2026-11-03T13:47:38.79487+01:00",
+   "completed_activity_id": "0276a8f4-2503-482d-9dd0-38ad20cd05ad"
+  }
+ ],
+ "from_date": null
+}

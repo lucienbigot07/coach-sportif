@@ -1,0 +1,27 @@
+{
+ "note": "Prévu ≠ réalisé. Les volumes « pending_confirmation » ne sont pas comptés dans le prévu ferme.",
+ "actual": {
+  "swim_m": null,
+  "running_km": 5.0,
+  "football_sessions": 0,
+  "strength_sessions": 2,
+  "sessions_completed": 3,
+  "strength_work_sets": 24,
+  "running_duration_s_known": 1442,
+  "running_sessions_missing_duration": 0
+ },
+ "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+ "planned": {
+  "football_firm": 1,
+  "swim_sessions": 2,
+  "running_km_firm": 13.0,
+  "strength_sessions": 4,
+  "cancelled_or_skipped": 0,
+  "football_pending_confirmation": 1,
+  "running_km_pending_confirmation": 16.0,
+  "running_sessions_without_fixed_distance": 0
+ },
+ "week_end": "2026-11-08",
+ "week_start": "2026-11-02",
+ "plan_version": 2
+}

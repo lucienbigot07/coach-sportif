@@ -1,0 +1,7 @@
+# Versions vérifiées par la suite de tests (28 tests) le 03/11/2026
+mcp==2.3.0
+httpx2==2.13.1
+pydantic==2.13.5
+starlette==1.7.0
+uvicorn==0.54.0
+cryptography==50.0.1

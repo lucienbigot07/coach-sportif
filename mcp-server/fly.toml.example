@@ -1,0 +1,23 @@
+# Exemple Fly.io (région Paris). À adapter : `fly launch --no-deploy` puis `fly secrets set ...`
+app = "coach-sportif-mcp"
+primary_region = "cdg"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "coach_state"
+  destination = "/data"
+
+[checks.health]
+  type = "http"
+  port = 8080
+  path = "/healthz"
+  interval = "30s"
+  timeout = "5s"

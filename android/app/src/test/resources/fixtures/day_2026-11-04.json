@@ -1,0 +1,436 @@
+{
+ "date": "2026-11-04",
+ "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+ "timezone": "Europe/Paris",
+ "activities": [
+  {
+   "id": "21044ed1-1165-4893-a5a1-edb0eb53b1d7",
+   "date": "2026-11-04",
+   "notes": "pas de finish rapide",
+   "sport": "running",
+   "title": "Endurance facile",
+   "status": "planned",
+   "target": {
+    "distance_m": 8000,
+    "rpe_10_range": [
+     3,
+     4
+    ],
+    "pace_s_per_km_range": [
+     360,
+     395
+    ],
+    "if_tired_distance_m_range": [
+     6000,
+     8000
+    ]
+   },
+   "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+   "version": 2,
+   "sort_order": 6,
+   "updated_at": "2026-11-03T13:47:38.873799+01:00",
+   "updated_by": "claude_mcp",
+   "last_change": {
+    "at": "2026-11-03T13:47:38.873799+01:00",
+    "actor": "claude_mcp",
+    "action": "revise",
+    "reason": "fixture",
+    "previous": {
+     "id": "21044ed1-1165-4893-a5a1-edb0eb53b1d7",
+     "date": "2026-11-04",
+     "notes": "pas de finish rapide",
+     "sport": "running",
+     "title": "Endurance facile",
+     "status": "planned",
+     "target": {
+      "distance_m": 10000,
+      "rpe_10_range": [
+       3,
+       4
+      ],
+      "pace_s_per_km_range": [
+       360,
+       395
+      ],
+      "if_tired_distance_m_range": [
+       6000,
+       8000
+      ]
+     },
+     "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+     "version": 1,
+     "sort_order": 6,
+     "updated_at": "2026-11-03T13:47:38.79487+01:00",
+     "updated_by": "import",
+     "session_key": "20261104_run",
+     "confirmation_required": false
+    }
+   },
+   "session_key": "20261104_run",
+   "confirmation_required": false
+  },
+  {
+   "id": "4aff34aa-0d8f-4c89-98ae-44b0b315e663",
+   "date": "2026-11-04",
+   "sport": "strength",
+   "title": "Pecs/Triceps",
+   "status": "planned",
+   "target": {
+    "intensity": "normale progressive"
+   },
+   "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+   "subtype": "pecs_triceps",
+   "version": 2,
+   "exercises": [
+    {
+     "name": "Développé couché barre",
+     "notes": "distinct du développé machine",
+     "split": "pecs_triceps",
+     "rir_max": 2,
+     "rir_min": 1,
+     "position": 1,
+     "reference": {
+      "historical_reference": {
+       "notes": "distinct du développé machine",
+       "source": "historical_dossier",
+       "reference": {
+        "sets": [
+         [
+          80,
+          10
+         ],
+         [
+          80,
+          10
+         ],
+         [
+          80,
+          10
+         ]
+        ],
+        "rep_unit": "repetitions",
+        "load_unit": "kg"
+       },
+       "reference_type": "reference_confirmed",
+       "last_complete_session_date": "2026-10-19"
+      }
+     },
+     "load_basis": "total",
+     "is_priority": false,
+     "target_reps": 10,
+     "target_sets": 3,
+     "variant_key": "bench_barbell",
+     "target_load_kg": 80.0,
+     "performance_unit": "reps",
+     "equipment_variant": "barre libre"
+    },
+    {
+     "name": "Chest Press",
+     "split": "pecs_triceps",
+     "position": 2,
+     "reference": {
+      "historical_reference": {
+       "source": "historical_dossier",
+       "reference": {
+        "sets": [
+         [
+          50,
+          10
+         ],
+         [
+          50,
+          10
+         ],
+         [
+          50,
+          10
+         ]
+        ],
+        "load_unit": "kg"
+       },
+       "reference_type": "reference_confirmed"
+      },
+      "future_target_not_validated": {
+       "sets": 3,
+       "load_kg": 50,
+       "reps_each": 12
+      }
+     },
+     "load_basis": "machine",
+     "is_priority": true,
+     "target_reps": 12,
+     "target_sets": 3,
+     "variant_key": "chest_press",
+     "target_load_kg": 50.0,
+     "performance_unit": "reps",
+     "equipment_variant": "machine non précisée"
+    }
+   ],
+   "sort_order": 7,
+   "updated_at": "2026-11-03T13:48:09.617993+01:00",
+   "updated_by": "claude_mcp",
+   "last_change": {
+    "at": "2026-11-03T13:48:09.617993+01:00",
+    "actor": "claude_mcp",
+    "action": "revise",
+    "reason": "fixture exercices",
+    "previous": {
+     "id": "4aff34aa-0d8f-4c89-98ae-44b0b315e663",
+     "date": "2026-11-04",
+     "sport": "strength",
+     "title": "Pecs/Triceps",
+     "status": "planned",
+     "target": {
+      "intensity": "normale progressive"
+     },
+     "plan_id": "896fabac-51e7-4455-84f2-5778ea96ca35",
+     "subtype": "pecs_triceps",
+     "version": 1,
+     "sort_order": 7,
+     "updated_at": "2026-11-03T13:47:38.79487+01:00",
+     "updated_by": "import",
+     "session_key": "20261104_chest",
+     "split_references": [
+      {
+       "name": "Abdos latéraux debout",
+       "notes": "non réalisés le 19 octobre",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "notes": "non réalisés le 19 octobre",
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            32,
+            10
+           ],
+           [
+            32,
+            10
+           ],
+           [
+            32,
+            10
+           ]
+          ]
+         },
+         "reference_type": "reference_confirmed"
+        }
+       },
+       "load_basis": "unknown",
+       "variant_key": "standing_lateral_abs",
+       "performance_unit": "reps",
+       "equipment_variant": "machine/charge à confirmer"
+      },
+      {
+       "name": "Chest Press",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            50,
+            10
+           ],
+           [
+            50,
+            10
+           ],
+           [
+            50,
+            10
+           ]
+          ],
+          "load_unit": "kg"
+         },
+         "reference_type": "reference_confirmed"
+        },
+        "future_target_not_validated": {
+         "sets": 3,
+         "load_kg": 50,
+         "reps_each": 12
+        }
+       },
+       "load_basis": "machine",
+       "variant_key": "chest_press",
+       "performance_unit": "reps",
+       "equipment_variant": "machine non précisée"
+      },
+      {
+       "name": "Développé couché barre",
+       "notes": "distinct du développé machine",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "notes": "distinct du développé machine",
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            80,
+            10
+           ],
+           [
+            80,
+            10
+           ],
+           [
+            80,
+            10
+           ]
+          ],
+          "rep_unit": "repetitions",
+          "load_unit": "kg"
+         },
+         "reference_type": "reference_confirmed",
+         "last_complete_session_date": "2026-10-19"
+        }
+       },
+       "load_basis": "total",
+       "variant_key": "bench_barbell",
+       "performance_unit": "reps",
+       "equipment_variant": "barre libre"
+      },
+      {
+       "name": "Développé machine",
+       "notes": "ancien meilleur essai, non 3 séries prouvées",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "notes": "ancien meilleur essai, non 3 séries prouvées",
+         "source": "historical_dossier",
+         "reference": {
+          "load_unit": "kg",
+          "best_observed_set": [
+           90,
+           10
+          ]
+         },
+         "reference_type": "best_set_only"
+        }
+       },
+       "load_basis": "machine",
+       "variant_key": "developpe_machine_unspecified",
+       "performance_unit": "reps",
+       "equipment_variant": "machine non précisée"
+      },
+      {
+       "name": "Pec Fly",
+       "notes": "79 x10x3 facile, monter seulement si même machine",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "notes": "79 x10x3 facile, monter seulement si même machine",
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            79,
+            10
+           ],
+           [
+            79,
+            10
+           ],
+           [
+            79,
+            10
+           ]
+          ],
+          "load_unit": "kg"
+         },
+         "reference_type": "reference_confirmed"
+        },
+        "future_target_not_validated": {
+         "try_next_machine_increment": true
+        }
+       },
+       "load_basis": "machine",
+       "variant_key": "pec_fly",
+       "performance_unit": "reps",
+       "equipment_variant": "même machine à identifier"
+      },
+      {
+       "name": "Triceps poulie basse position 2",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            24.5,
+            10
+           ],
+           [
+            24.5,
+            10
+           ],
+           [
+            24.5,
+            10
+           ]
+          ]
+         },
+         "reference_type": "reference_confirmed"
+        },
+        "future_target_not_validated": {
+         "sets": 3,
+         "load_kg": 24.5,
+         "reps_each": 12
+        }
+       },
+       "load_basis": "machine",
+       "variant_key": "triceps_low_cable_pos2",
+       "performance_unit": "reps",
+       "equipment_variant": "poulie basse position 2"
+      },
+      {
+       "name": "Triceps poulie haute",
+       "split": "pecs_triceps",
+       "reference": {
+        "historical_reference": {
+         "source": "historical_dossier",
+         "reference": {
+          "sets": [
+           [
+            22.5,
+            10
+           ],
+           [
+            22.5,
+            10
+           ],
+           [
+            22.5,
+            10
+           ]
+          ]
+         },
+         "reference_type": "reference_confirmed"
+        },
+        "future_target_not_validated": {
+         "sets": 3,
+         "load_kg": 22.5,
+         "reps_each": 12
+        }
+       },
+       "load_basis": "machine",
+       "variant_key": "triceps_high_cable",
+       "performance_unit": "reps",
+       "equipment_variant": "poulie haute"
+      }
+     ],
+     "confirmation_required": false
+    }
+   },
+   "session_key": "20261104_chest",
+   "confirmation_required": false
+  }
+ ],
+ "plan_status": "validated",
+ "plan_version": 3
+}
