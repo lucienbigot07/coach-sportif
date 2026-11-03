@@ -502,9 +502,14 @@ begin
       perform coach_private.fail(409, 'completed_activity_protected', jsonb_build_object('session_key', r.key, 'status', r.status,
         'hint', 'retirer cette activité du plan publié ; un résultat se corrige via correct_completed_activity'));
     end loop;
-    -- 2) on conserve les activités terminées/en cours dans le nouveau plan
-    for r in update planned_activities set plan_id = d.id
-              where plan_id = v_old.id and user_id = u and status in ('completed', 'in_progress') returning key loop
+    -- 2) on conserve dans le nouveau plan ce que l'utilisateur a déclaré : terminé / en cours, et aussi
+    --    « pas fait » (skipped) ou annulé, sauf si le nouveau plan reprogramme explicitement la même clé
+    for r in update planned_activities pa set plan_id = d.id
+              where pa.plan_id = v_old.id and pa.user_id = u
+                and (pa.status in ('completed', 'in_progress')
+                     or (pa.status in ('skipped', 'cancelled')
+                         and not exists (select 1 from planned_activities nd where nd.plan_id = d.id and nd.key = pa.key)))
+              returning pa.key loop
       preserved := preserved || to_jsonb(r.key);
     end loop;
     -- 3) le reste de l'ancien plan est remplacé (historique conservé)

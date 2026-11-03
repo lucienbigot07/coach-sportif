@@ -307,3 +307,21 @@ def test_C6_export_et_suppression(backend):
     r = call(backend, "delete_my_data", USER_B, p_confirmation="SUPPRIMER TOUTES MES DONNEES")
     assert r["success"]  # B n'a rien ; les données de A sont intactes
     assert call(backend, "export_my_data")["athlete_profiles"]
+
+
+def test_republication_conserve_les_seances_pas_faites(backend):
+    w = call(backend, "list_week_plan", p_week_start="2026-11-02")
+    swim = next(a for d in w["days"] for a in d["activities"] if a["session_key"] == "20261106_swim")
+    call(backend, "revise_session", p_session_key="20261106_swim", p_expected_version=swim["version"],
+         p_patch={"status": "skipped", "notes": "Pas fait : Pas disponible"}, p_reason="Signalé dans l'application",
+         p_user_approval_reference="Déclaré par l'utilisateur dans l'application", p_idempotency_key=key(), p_actor="android_app")
+    w = call(backend, "list_week_plan", p_week_start="2026-11-02")
+    keep = [a for d in w["days"] for a in d["activities"] if a["status"] not in ("completed", "skipped", "cancelled")]
+    acts = [{"key": a["session_key"], "date": a["date"], "sport": a["sport"], "subtype": a.get("subtype"), "title": a["title"],
+             "target": a["target"], "status": "pending_confirmation" if a.get("confirmation_required") else "planned"} for a in keep]
+    dr = call(backend, "create_plan_draft", p_week_start="2026-11-02", p_activities=acts, p_rationale="test", p_idempotency_key=key())
+    p = call(backend, "publish_validated_plan", p_plan_id=dr["plan_id"], p_expected_version=1,
+             p_user_approval_reference="je valide", p_idempotency_key=key())
+    assert "20261106_swim" in p["preserved_completed_sessions"]
+    fri = {a["session_key"]: a for a in call(backend, "get_day_plan", p_date="2026-11-06")["activities"]}
+    assert fri["20261106_swim"]["status"] == "skipped"
