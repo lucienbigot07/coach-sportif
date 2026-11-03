@@ -16,6 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.runtime.remember
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -64,6 +68,17 @@ class DayViewModel(private val repo: Repository, val date: String) : ViewModel()
     val error = MutableStateFlow<String?>(null)
     val refreshing = MutableStateFlow(false)
 
+    val message = MutableStateFlow<String?>(null)
+
+    fun skip(a: PlannedActivity, reason: String) = viewModelScope.launch {
+        val r = repo.skip(a.sessionKey, a.version, a.date, reason, "${a.title} (pas fait)")
+        message.value = when (r) {
+            is fr.coachsportif.app.data.SaveOutcome.Synced -> "« ${a.title} » marquée comme pas faite. Le coach le verra."
+            fr.coachsportif.app.data.SaveOutcome.Queued -> "Enregistré sur le téléphone, envoi dès que le réseau revient."
+            is fr.coachsportif.app.data.SaveOutcome.Rejected -> "Refusé par le serveur (${r.code}). Rafraîchis puis réessaie."
+        }
+    }
+
     fun refresh() = viewModelScope.launch {
         refreshing.value = true
         runCatching { repo.flush(); repo.refreshDay(date) }
@@ -87,6 +102,7 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
     val outbox by vm.outbox.collectAsState(initial = emptyList())
     val error by vm.error.collectAsState()
     val refreshing by vm.refreshing.collectAsState()
+    val message by vm.message.collectAsState()
     val ctx = LocalContext.current
     LaunchedEffect(date) { vm.refresh() }
 
@@ -113,6 +129,7 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
                         Spacer(Modifier.height(12.dp))
                     }
                     SyncLine(cached?.fetchedAtMs, cached?.planVersion, error, outbox)
+                    message?.let { Spacer(Modifier.height(6.dp)); fr.coachsportif.app.ui.components.Banner(MaterialTheme.colorScheme.primary, it) }
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -128,7 +145,7 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
                     }
                 }
             }
-            items(plan?.activities.orEmpty(), key = { it.sessionKey }) { a -> ActivityCard(a, onStart) }
+            items(plan?.activities.orEmpty(), key = { it.sessionKey }) { a -> ActivityCard(a, onStart, onSkip = { r -> vm.skip(a, r) }) }
             items(plan?.unplannedCompleted.orEmpty(), key = { it.completedActivityId }) { r ->
                 val st = sportStyle(r.sport, r.subtype)
                 LaneCard(st.color) {
@@ -156,8 +173,9 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
 }
 
 @Composable
-fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) {
+fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit, onSkip: ((String) -> Unit)? = null) {
     var expanded by rememberSaveable(a.sessionKey) { mutableStateOf(false) }
+    var skipping by remember { mutableStateOf(false) }
     val st = sportStyle(a.sport, a.subtype)
     val muted = LocalExtra.current.muted
     LaneCard(st.color, dimmed = a.status in listOf("cancelled", "skipped")) {
@@ -189,7 +207,7 @@ fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) {
             }
         }
         a.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted, modifier = Modifier.padding(top = 8.dp)) }
-        a.lastChange?.let {
+        a.lastChange?.takeIf { it.actor != "android_app" }?.let {
             Text("Modifié par le coach" + (it.reason?.let { r -> " : $r" } ?: ""), style = MaterialTheme.typography.bodySmall,
                 color = Amber, modifier = Modifier.padding(top = 8.dp))
         }
@@ -214,7 +232,41 @@ fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) {
                 Text(if (expanded) "Masquer" else "Détails")
             }
         }
+        if (onSkip != null && a.status in listOf("planned", "pending_confirmation"))
+            TextButton(onClick = { skipping = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text(if (a.status == "pending_confirmation") "Je n'y vais pas" else "Pas fait / pas dispo", color = muted)
+            }
     }
+    if (skipping && onSkip != null) SkipDialog(a.title, onDismiss = { skipping = false }) { reason -> skipping = false; onSkip(reason) }
+}
+
+@Composable
+private fun SkipDialog(title: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    val reasons = listOf("Pas disponible", "Fatigue", "Douleur ou gêne", "Séance annulée", "Météo", "Autre")
+    var picked by remember { mutableStateOf<String?>(null) }
+    var comment by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("« $title » pas faite") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Pourquoi ? Le coach en tiendra compte pour la suite.", style = MaterialTheme.typography.bodyMedium)
+                reasons.chunked(2).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        row.forEach { r -> FilterChip(selected = picked == r, onClick = { picked = r }, label = { Text(r) }) }
+                    }
+                }
+                OutlinedTextField(comment, { comment = it.take(300) }, Modifier.fillMaxWidth(),
+                    placeholder = { Text("Précision (facultatif)") }, shape = RoundedCornerShape(12.dp), maxLines = 3)
+            }
+        },
+        confirmButton = {
+            Button(enabled = picked != null, onClick = {
+                onConfirm(picked!! + (comment.trim().takeIf { it.isNotEmpty() }?.let { " — $it" } ?: ""))
+            }) { Text("Confirmer") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } },
+    )
 }
 
 @Composable

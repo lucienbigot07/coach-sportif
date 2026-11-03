@@ -71,7 +71,7 @@ object Fmt {
         "in_progress" -> "En cours"
         "completed" -> "Terminé"
         "cancelled" -> "Annulé"
-        "skipped" -> "Ignoré"
+        "skipped" -> "Pas fait"
         else -> status
     }
 

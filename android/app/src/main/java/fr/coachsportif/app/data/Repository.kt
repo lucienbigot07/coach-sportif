@@ -138,6 +138,27 @@ class Repository(
         return outcome
     }
 
+    /**
+     * « Pas fait / pas dispo » : la séance passe en « skipped », avec le motif. L'ancienne version reste
+     * dans l'historique. Passe par la même file d'attente que les résultats (fonctionne hors connexion).
+     */
+    suspend fun skip(sessionKey: String, version: Int, date: String, reason: String, label: String): SaveOutcome {
+        val key = "android-" + UUID.randomUUID()
+        val args = buildJsonObject {
+            put("p_session_key", sessionKey)
+            put("p_expected_version", version)
+            put("p_patch", buildJsonObject { put("status", "skipped"); put("notes", "Pas fait : $reason") })
+            put("p_reason", "Signalé dans l'application : $reason")
+            put("p_user_approval_reference", "Déclaré par l'utilisateur dans l'application : $reason")
+            put("p_idempotency_key", key)
+            put("p_actor", "android_app")
+        }
+        db.outbox().enqueue(OutboxOp(key, "revise_session", args.toString(), label, System.currentTimeMillis()))
+        val outcome = flushOne(key)
+        if (outcome is SaveOutcome.Synced) runCatching { refreshDay(date) }
+        return outcome
+    }
+
     /** Envoie toute la file (appelé par SyncWorker et au démarrage). Retourne true si la file est vide. */
     suspend fun flush(): Boolean = flushLock.withLock {
         for (op in db.outbox().pending()) {
