@@ -142,11 +142,14 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 }
 
 @Composable
-fun SportBadge(style: SportStyle, size: Int = 44) {
+fun SportBadge(style: SportStyle, size: Int = 44, filled: Boolean = false) {
     Box(
-        Modifier.size(size.dp).clip(RoundedCornerShape(14.dp)).background(style.color.copy(alpha = 0.14f)),
+        Modifier.size(size.dp).clip(CircleShape).background(if (filled) style.color else style.color.copy(alpha = 0.14f)),
         contentAlignment = Alignment.Center,
-    ) { Text(style.emoji, style = MaterialTheme.typography.titleLarge) }
+    ) {
+        androidx.compose.material3.Icon(style.icon, contentDescription = style.label,
+            tint = if (filled) Color.White else style.color, modifier = Modifier.size((size * 0.55f).dp))
+    }
 }
 
 /** Encart de référence (dernière séance, objectif…) : fond légèrement teinté, sans bordure. */

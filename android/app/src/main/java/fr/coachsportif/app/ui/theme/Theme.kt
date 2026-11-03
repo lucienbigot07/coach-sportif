@@ -8,7 +8,18 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Hiking
+import androidx.compose.material.icons.filled.Pool
+import androidx.compose.material.icons.filled.Sledding
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -33,17 +44,18 @@ val Amber = Color(0xFFE5A23A)
 val Ember = Color(0xFFC0392B)
 
 @Immutable
-data class SportStyle(val color: Color, val emoji: String, val label: String)
+data class SportStyle(val color: Color, val emoji: String, val label: String, val icon: ImageVector)
 
 fun sportStyle(sport: String, subtype: String? = null): SportStyle = when (sport) {
-    "running" -> if (subtype == "trail") SportStyle(Trail, "⛰️", "Trail") else SportStyle(Track, "🏃", "Course")
-    "swimming" -> SportStyle(Pool, "🏊", "Natation")
-    "strength" -> SportStyle(Iron, "💪", "Musculation")
-    "football" -> SportStyle(Pitch, "⚽", "Football")
-    "hyrox" -> SportStyle(Sled, "🛷", "HYROX")
-    "cycling" -> SportStyle(Pool, "🚴", "Vélo")
-    "walking" -> SportStyle(Iron, "🚶", "Marche")
-    else -> SportStyle(Iron, "🏅", "Activité")
+    "running" -> if (subtype == "trail") SportStyle(Trail, "⛰️", "Trail", Icons.Filled.Hiking)
+                 else SportStyle(Track, "🏃", "Course", Icons.AutoMirrored.Filled.DirectionsRun)
+    "swimming" -> SportStyle(Pool, "🏊", "Natation", Icons.Filled.Pool)
+    "strength" -> SportStyle(Iron, "💪", "Musculation", Icons.Filled.FitnessCenter)
+    "football" -> SportStyle(Pitch, "⚽", "Football", Icons.Filled.SportsSoccer)
+    "hyrox" -> SportStyle(Sled, "🛷", "HYROX", Icons.Filled.Sledding)
+    "cycling" -> SportStyle(Pool, "🚴", "Vélo", Icons.AutoMirrored.Filled.DirectionsBike)
+    "walking" -> SportStyle(Iron, "🚶", "Marche", Icons.AutoMirrored.Filled.DirectionsWalk)
+    else -> SportStyle(Iron, "🏅", "Activité", Icons.Filled.EmojiEvents)
 }
 
 @Immutable
