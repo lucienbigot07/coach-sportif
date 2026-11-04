@@ -46,6 +46,7 @@ import fr.coachsportif.app.data.remote.OfflineException
 import fr.coachsportif.app.domain.ExerciseRef
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.PlannedActivity
+import fr.coachsportif.app.ui.components.CoachLink
 import fr.coachsportif.app.ui.components.InfoBox
 import fr.coachsportif.app.ui.components.LaneCard
 import fr.coachsportif.app.ui.components.ResultSummary
@@ -159,10 +160,10 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
             }
             item {
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
-                    TextButton(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://claude.ai/new"))) }) {
+                    TextButton(onClick = { CoachLink.open(ctx, coachDayMessage(plan, date)) }) {
                         Text("Parler du programme avec le coach")
                     }
-                    Text("Ouvre Claude. Le coach relit tes séances avec le connecteur Coach Sportif.",
+                    Text("S'ouvre dans l'appli. Retour pour revenir ici. Active le connecteur Coach Sportif dans la conversation.",
                         style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.muted,
                         modifier = Modifier.padding(horizontal = 12.dp))
                     Spacer(Modifier.height(24.dp))
@@ -288,4 +289,16 @@ fun ReferenceLine(e: ExerciseRef) {
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
         else Fmt.futureTarget(e.reference?.futureTargetNotValidated)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted) }
     }
+}
+
+
+/** Message d'ouverture : le coach sait de quel jour on parle et va relire la base. */
+private fun coachDayMessage(plan: fr.coachsportif.app.domain.DayPlan?, date: String): String {
+    val acts = plan?.activities.orEmpty()
+    val lines = mutableListOf("Programme du ${Fmt.dayTitle(date)} (relis-le avec le connecteur Coach Sportif) :")
+    acts.forEach { a -> lines += "- ${a.title} : ${Fmt.statusLabel(a.status)}" }
+    if (acts.isEmpty()) lines += "- aucune séance publiée"
+    lines += ""
+    lines += "Ma question : "
+    return lines.joinToString("\n")
 }

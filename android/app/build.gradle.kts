@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(libs.androidx.browser)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

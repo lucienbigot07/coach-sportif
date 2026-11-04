@@ -2,13 +2,6 @@ package fr.coachsportif.app.ui.log
 
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.ui.platform.LocalContext
-import java.net.URLEncoder
-import android.widget.Toast
-import android.net.Uri
-import android.content.Intent
-import android.content.Context
-import android.content.ClipboardManager
-import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.OutlinedButton
@@ -72,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import fr.coachsportif.app.data.SaveOutcome
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.PlannedActivity
+import fr.coachsportif.app.ui.components.CoachLink
 import fr.coachsportif.app.ui.components.InfoBox
 import fr.coachsportif.app.ui.components.LaneCard
 import fr.coachsportif.app.ui.components.SectionCard
@@ -107,7 +101,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
                 },
                 navigationIcon = { IconButton(onClick = onDone) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") } },
                 actions = {
-                    if (ready != null) TextButton(onClick = { askCoach(ctx, vm.coachMessage()) }) {
+                    if (ready != null) TextButton(onClick = { CoachLink.open(ctx, vm.coachMessage()) }) {
                         Icon(Icons.AutoMirrored.Filled.Chat, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("Coach")
                     }
                 },
@@ -449,17 +443,4 @@ private fun AddExerciseDialog(vm: LogViewModel, split: String?, onClose: () -> U
         },
         dismissButton = { TextButton(onClick = { if (creating) creating = false else onClose() }) { Text(if (creating) "Retour" else "Fermer") } },
     )
-}
-
-
-/**
- * Ouvre une conversation Claude avec un message prérempli (séance en cours + question).
- * Le message est aussi copié : si l'appli Claude ignore le préremplissage, il suffit de le coller.
- */
-private fun askCoach(ctx: Context, message: String) {
-    val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    cm.setPrimaryClip(ClipData.newPlainText("Message pour le coach", message))
-    Toast.makeText(ctx, "Séance copiée : colle-la dans Claude si elle n'apparaît pas", Toast.LENGTH_LONG).show()
-    val url = "https://claude.ai/new?q=" + URLEncoder.encode(message, "UTF-8").replace("+", "%20")
-    ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 }
