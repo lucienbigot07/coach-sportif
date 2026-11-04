@@ -87,6 +87,8 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     val ui = MutableStateFlow<LogUi>(LogUi.Loading)
     val saving = MutableStateFlow(false)
     val outcome = MutableStateFlow<SaveOutcome?>(null)
+    /** Vrai quand la séance a été mise à jour par le coach pendant qu'elle était en cours. */
+    val coachChanged = MutableStateFlow(false)
     private val json = Json { ignoreUnknownKeys = true }
     /** Catalogue des machines/variantes connues (chargé à la demande pour « Ajouter un exercice »). */
     val catalog = MutableStateFlow<List<VariantRow>?>(null)
@@ -101,10 +103,39 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
             val saved = repo.loadDraft(sessionKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
             // le coach a modifié la séance depuis le brouillon : on repart de la nouvelle version
             // tant qu'aucune série n'a été cochée (sinon on garde la saisie en cours)
-            val untouched = saved?.exercises?.none { e -> e.sets.any { it.done } } ?: true
-            val draft = if (saved == null || (saved.activityVersion != a.version && untouched)) initialDraft(a) else saved
+            val draft = when {
+                saved == null -> initialDraft(a)
+                saved.activityVersion == a.version -> saved
+                else -> mergeCoachUpdate(saved, initialDraft(a))
+            }
             ui.value = LogUi.Ready(a, draft)
+            if (saved != null && saved.activityVersion != a.version) {
+                coachChanged.value = true
+                repo.saveDraft(sessionKey, json.encodeToString(LogDraft.serializer(), draft))
+            }
         }
+    }
+
+    /**
+     * Le coach a modifié la séance alors qu'elle était commencée : on part du nouveau programme
+     * et on y reporte tout ce que l'utilisateur a déjà saisi (rien n'est perdu).
+     * - exercice présent dans les deux : saisie conservée (objectif mis à jour) ;
+     * - nouvel exercice du coach : ajouté ;
+     * - exercice retiré par le coach : supprimé s'il est vide, gardé s'il contient des séries ;
+     * - exercices ajoutés par l'utilisateur : gardés.
+     */
+    private fun mergeCoachUpdate(saved: LogDraft, fresh: LogDraft): LogDraft {
+        fun hasData(e: ExDraft) = e.added || e.comment.isNotBlank() || e.sets.any { it.done || it.perf.isNotBlank() }
+        val savedByKey = saved.exercises.associateBy { it.variantKey }
+        val freshKeys = fresh.exercises.flatMap { f -> listOf(f.variantKey) + f.options.map { it.key } }.toSet()
+        val merged = fresh.exercises.map { f ->
+            val s = savedByKey[f.variantKey] ?: f.options.firstNotNullOfOrNull { o -> savedByKey[o.key] }
+            if (s == null) f else s.copy(targetLine = if (s.variantKey == f.variantKey) f.targetLine else s.targetLine,
+                options = f.options, added = false)
+        }
+        val leftovers = saved.exercises.filter { it.variantKey !in freshKeys && hasData(it) }
+        return fresh.copy(exercises = merged + leftovers, rpe = saved.rpe, notes = saved.notes,
+            endurance = saved.endurance, startedAtMs = saved.startedAtMs)
     }
 
     private fun initialDraft(a: PlannedActivity): LogDraft {

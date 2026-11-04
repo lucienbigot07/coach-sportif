@@ -86,6 +86,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
     val ui by vm.ui.collectAsState()
     val saving by vm.saving.collectAsState()
     val outcome by vm.outcome.collectAsState()
+    val coachChanged by vm.coachChanged.collectAsState()
     var confirm by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
     val ready = ui as? LogUi.Ready
@@ -134,6 +135,10 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
             is LogUi.Missing -> Text(s.reason, Modifier.padding(pad).padding(20.dp))
             is LogUi.Ready -> LazyColumn(Modifier.padding(pad).fillMaxSize().imePadding()) {
                 item {
+                    if (coachChanged) Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        fr.coachsportif.app.ui.components.Banner(MaterialTheme.colorScheme.tertiary,
+                            "Le coach a modifié cette séance. Tes séries déjà saisies sont conservées.")
+                    }
                     Text("Tout est sauvegardé sur le téléphone à chaque saisie. Coche une série quand elle est faite.",
                         style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.muted,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
