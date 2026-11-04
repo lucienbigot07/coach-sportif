@@ -87,6 +87,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
     val saving by vm.saving.collectAsState()
     val outcome by vm.outcome.collectAsState()
     val coachChanged by vm.coachChanged.collectAsState()
+    val editing by vm.editing.collectAsState()
     var confirm by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
     val ready = ui as? LogUi.Ready
@@ -124,7 +125,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
                     }
                     Button(onClick = { confirm = true }, enabled = !saving, shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.height(52.dp)) {
-                        Text(if (saving) "Enregistrement…" else "Terminer la séance")
+                        Text(if (saving) "Enregistrement…" else if (editing) "Enregistrer les modifications" else "Terminer la séance")
                     }
                 }
             }
@@ -135,6 +136,10 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
             is LogUi.Missing -> Text(s.reason, Modifier.padding(pad).padding(20.dp))
             is LogUi.Ready -> LazyColumn(Modifier.padding(pad).fillMaxSize().imePadding()) {
                 item {
+                    if (editing) Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        fr.coachsportif.app.ui.components.Banner(MaterialTheme.colorScheme.primary,
+                            "Modification d'une séance terminée. L'ancienne version reste dans l'historique et le coach verra la correction.")
+                    }
                     if (coachChanged) Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                         fr.coachsportif.app.ui.components.Banner(MaterialTheme.colorScheme.tertiary,
                             "Le coach a modifié cette séance. Tes séries déjà saisies sont conservées.")
@@ -172,12 +177,12 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
         val n = vm.workSetsReady(ready.draft)
         AlertDialog(
             onDismissRequest = { confirm = false },
-            title = { Text("Terminer la séance ?") },
+            title = { Text(if (editing) "Enregistrer les modifications ?" else "Terminer la séance ?") },
             text = {
                 Text(if (ready.activity.sport == "strength") "$n série(s) de travail seront enregistrées. Les séries non cochées ou sans répétitions sont ignorées."
                      else "Le résultat sera enregistré comme réalisé.")
             },
-            confirmButton = { Button(onClick = { confirm = false; vm.finish() }) { Text("Terminer") } },
+            confirmButton = { Button(onClick = { confirm = false; vm.finish() }) { Text(if (editing) "Enregistrer" else "Terminer") } },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text("Continuer la séance") } },
         )
     }
@@ -186,7 +191,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
             onDismissRequest = { vm.clearOutcome() },
             title = {
                 Text(when (o) {
-                    is SaveOutcome.Synced -> "Séance enregistrée"
+                    is SaveOutcome.Synced -> if (editing) "Modifications enregistrées" else "Séance enregistrée"
                     SaveOutcome.Queued -> "Enregistrée sur le téléphone"
                     is SaveOutcome.Rejected -> "Séance refusée par le serveur"
                 })

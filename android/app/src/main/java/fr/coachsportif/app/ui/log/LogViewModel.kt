@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.data.SaveOutcome
+import fr.coachsportif.app.data.remote.AppJson
+import fr.coachsportif.app.domain.CompletedActivity
 import fr.coachsportif.app.domain.CompletionPayload
 import fr.coachsportif.app.domain.EnduranceIn
 import fr.coachsportif.app.domain.ExerciseRef
@@ -12,12 +14,17 @@ import fr.coachsportif.app.domain.NewVariantIn
 import fr.coachsportif.app.domain.VariantRow
 import fr.coachsportif.app.domain.PlannedActivity
 import fr.coachsportif.app.domain.SetIn
+import fr.coachsportif.app.domain.SetOut
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.put
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -89,6 +96,9 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     val outcome = MutableStateFlow<SaveOutcome?>(null)
     /** Vrai quand la séance a été mise à jour par le coach pendant qu'elle était en cours. */
     val coachChanged = MutableStateFlow(false)
+    /** Vrai quand on modifie une séance déjà terminée (correction du résultat). */
+    val editing = MutableStateFlow(false)
+    private var draftKey = sessionKey
     private val json = Json { ignoreUnknownKeys = true }
     /** Catalogue des machines/variantes connues (chargé à la demande pour « Ajouter un exercice »). */
     val catalog = MutableStateFlow<List<VariantRow>?>(null)
@@ -100,6 +110,15 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
             val fresh = runCatching { repo.refreshDay(date) }.getOrNull()
             val a = (fresh ?: repo.observeDay(date).first()?.data)?.activities?.firstOrNull { it.sessionKey == sessionKey }
             if (a == null) { ui.value = LogUi.Missing("Séance introuvable dans le dernier planning synchronisé."); return@launch }
+            val res = a.result
+            if (a.status == "completed" && res != null) {
+                // séance terminée : modification du résultat enregistré (brouillon séparé)
+                editing.value = true
+                draftKey = "edit:$sessionKey"
+                val savedEdit = repo.loadDraft(draftKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
+                ui.value = LogUi.Ready(a, savedEdit?.takeIf { it.activityVersion == res.version } ?: draftFromResult(a, res))
+                return@launch
+            }
             val saved = repo.loadDraft(sessionKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
             // le coach a modifié la séance depuis le brouillon : on repart de la nouvelle version
             // tant qu'aucune série n'a été cochée (sinon on garde la saisie en cours)
@@ -111,7 +130,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
             ui.value = LogUi.Ready(a, draft)
             if (saved != null && saved.activityVersion != a.version) {
                 coachChanged.value = true
-                repo.saveDraft(sessionKey, json.encodeToString(LogDraft.serializer(), draft))
+                repo.saveDraft(draftKey, json.encodeToString(LogDraft.serializer(), draft))
             }
         }
     }
@@ -136,6 +155,50 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         val leftovers = saved.exercises.filter { it.variantKey !in freshKeys && hasData(it) }
         return fresh.copy(exercises = merged + leftovers, rpe = saved.rpe, notes = saved.notes,
             endurance = saved.endurance, startedAtMs = saved.startedAtMs)
+    }
+
+    /** Brouillon pré-rempli avec le résultat déjà enregistré, plus les exercices prévus non faits (vides). */
+    private fun draftFromResult(a: PlannedActivity, r: CompletedActivity): LogDraft {
+        val planned = initialDraft(a)
+        val plannedByKey = planned.exercises.associateBy { it.variantKey }
+        val plannedKeys = planned.exercises.flatMap { p -> listOf(p.variantKey) + p.options.map { it.key } }.toSet()
+        fun perf(s: SetOut) = (s.reps ?: s.steps ?: s.seconds)?.toString() ?: ""
+        val done = r.exercises.map { ce ->
+            val base = plannedByKey[ce.variantKey]
+                ?: planned.exercises.firstOrNull { p -> p.options.any { it.key == ce.variantKey } }
+            val unit = when {
+                ce.workSets.any { it.steps != null } -> "steps"
+                ce.workSets.any { it.seconds != null } -> "seconds"
+                else -> base?.unit ?: "reps"
+            }
+            ExDraft(
+                variantKey = ce.variantKey, name = ce.name, equipment = ce.equipmentVariant, loadBasis = ce.loadBasis,
+                unit = unit, priority = base?.priority ?: false, refLine = base?.refLine, targetLine = base?.targetLine,
+                options = base?.options.orEmpty(), added = ce.variantKey !in plannedKeys,
+                comment = ce.workSets.mapNotNull { it.notes }.joinToString(" ; "),
+                sets = ce.warmupSets.map { SetDraft(isWarmup = true, load = it.loadKg?.let(Fmt::num) ?: "", perf = perf(it), done = true) } +
+                    ce.workSets.map { SetDraft(load = it.loadKg?.let(Fmt::num) ?: "", perf = perf(it), rir = it.rir?.toString() ?: "", done = true) },
+            )
+        }
+        val doneKeys = r.exercises.map { it.variantKey }.toSet()
+        val notDone = planned.exercises.filter { p -> p.variantKey !in doneKeys && p.options.none { it.key in doneKeys } }
+            .map { it.copy(sets = it.sets.map { s -> s.copy(done = false) }) }
+        val e = r.endurance
+        val swim = a.sport == "swimming"
+        val notes = r.notes.orEmpty().lines()
+            .filterNot { it.startsWith("Ajouté hors programme") }.joinToString("\n").trim()
+        return LogDraft(
+            activityVersion = r.version,
+            exercises = done + notDone,
+            endurance = EnduranceDraft(
+                distance = e?.distanceM?.let { if (swim) Fmt.num(it) else Fmt.num(it / 1000) } ?: "",
+                duration = Fmt.duration(e?.durationS) ?: "",
+                ascent = e?.ascentM?.toString() ?: "", avgHr = e?.avgHr?.toString() ?: "", maxHr = e?.maxHr?.toString() ?: "",
+                effortType = e?.effortType ?: r.actualSessionType, surface = e?.surface ?: "",
+                poolLength = e?.poolLengthM?.toString() ?: "",
+            ),
+            rpe = r.rpe10?.toInt(), notes = notes,
+        )
     }
 
     private fun initialDraft(a: PlannedActivity): LogDraft {
@@ -172,7 +235,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         val cur = ui.value as? LogUi.Ready ?: return
         val next = transform(cur.draft)
         ui.value = cur.copy(draft = next)
-        viewModelScope.launch { repo.saveDraft(sessionKey, json.encodeToString(LogDraft.serializer(), next)) }
+        viewModelScope.launch { repo.saveDraft(draftKey, json.encodeToString(LogDraft.serializer(), next)) }
     }
 
     fun editSet(ex: Int, set: Int, f: (SetDraft) -> SetDraft) = edit { d ->
@@ -333,7 +396,24 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         saving.value = true
         viewModelScope.launch {
             val label = "${cur.activity.title} du ${cur.activity.date}"
-            outcome.value = repo.complete(buildPayload(cur.activity, cur.draft), label)
+            val res = cur.activity.result
+            outcome.value = if (editing.value && res != null) {
+                val p = buildPayload(cur.activity, cur.draft)
+                if (cur.activity.sport == "strength" && p.sets.none { !it.isWarmup }) {
+                    SaveOutcome.Rejected("work_sets_required", "Garde au moins une série de travail cochée.")
+                } else {
+                    val patch = buildJsonObject {
+                        p.rpe10?.let { put("rpe_10", it) }
+                        put("notes", p.notes ?: "")
+                        p.actualSessionType?.let { put("actual_session_type", it) }
+                        if (cur.activity.sport == "strength" || p.sets.isNotEmpty())
+                            put("sets", AppJson.encodeToJsonElement(ListSerializer(SetIn.serializer()), p.sets))
+                        p.endurance?.let { put("endurance", AppJson.encodeToJsonElement(EnduranceIn.serializer(), it)) }
+                    }
+                    repo.correct(res.completedActivityId, res.version, patch, "Modifié dans l'application", label, cur.activity.date)
+                        .also { if (it is SaveOutcome.Synced) repo.clearDraft(draftKey) }
+                }
+            } else repo.complete(buildPayload(cur.activity, cur.draft), label)
             saving.value = false
         }
     }

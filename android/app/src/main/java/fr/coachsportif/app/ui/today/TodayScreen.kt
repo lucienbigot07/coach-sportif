@@ -225,6 +225,10 @@ fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit, onSkip:
             }
         }
         Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (a.status == "completed" && a.result != null)
+                OutlinedButton(onClick = { onStart(a) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Modifier")
+                }
             if (a.status in listOf("planned", "pending_confirmation", "in_progress"))
                 Button(onClick = { onStart(a) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                     Text(if (a.status == "pending_confirmation") "J'y suis allé" else "Commencer")

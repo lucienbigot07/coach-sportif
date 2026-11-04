@@ -274,7 +274,8 @@ private fun DayDetail(date: LocalDate, day: WeekDay?, events: List<EventOut>, on
 private fun SessionTile(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) {
     val st = sportStyle(a.sport, a.subtype)
     val muted = LocalExtra.current.muted
-    val actionable = a.status in listOf("planned", "pending_confirmation", "in_progress")
+    val actionable = a.status in listOf("planned", "pending_confirmation", "in_progress") ||
+        (a.status == "completed" && a.result != null)  // ouvre la modification
     Surface(
         Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(RoundedCornerShape(20.dp))
             .then(if (actionable) Modifier.clickable { onStart(a) } else Modifier),

@@ -159,6 +159,25 @@ class Repository(
         return outcome
     }
 
+    /** Correction d'une séance déjà terminée : version attendue, ancienne valeur conservée côté serveur. */
+    suspend fun correct(completedId: String, version: Int, patch: JsonObject, reason: String, label: String, date: String): SaveOutcome {
+        val key = "android-" + UUID.randomUUID()
+        val args = buildJsonObject {
+            put("p_completed_activity_id", completedId)
+            put("p_expected_version", version)
+            put("p_patch", patch)
+            put("p_reason", reason)
+            put("p_idempotency_key", key)
+            put("p_actor", "android_app")
+        }
+        db.outbox().enqueue(OutboxOp(key, "correct_completed_activity", args.toString(), "$label (modification)", System.currentTimeMillis()))
+        val outcome = flushOne(key)
+        if (outcome is SaveOutcome.Synced) runCatching { refreshDay(date) }
+        return outcome
+    }
+
+    suspend fun clearDraft(key: String) = db.drafts().remove(key)
+
     /** Envoie toute la file (appelé par SyncWorker et au démarrage). Retourne true si la file est vide. */
     suspend fun flush(): Boolean = flushLock.withLock {
         for (op in db.outbox().pending()) {
