@@ -132,6 +132,21 @@ object Fmt {
         return r.toString()
     }
 
+    /** Première charge d'une référence historique (pour pré-remplir les séries). */
+    fun historicalFirstLoad(ref: JsonObject?): Double? {
+        val r = ref?.get("reference") as? JsonObject ?: return null
+        fun first(e: JsonElement?): Double? = when (e) {
+            is JsonArray -> e.firstOrNull()?.let { x ->
+                if (x is JsonArray) (x.firstOrNull() as? JsonPrimitive)?.doubleOrNull
+                else if (x is JsonObject) (x["load_kg"] as? JsonPrimitive)?.doubleOrNull
+                else (x as? JsonPrimitive)?.doubleOrNull }
+            else -> null
+        }
+        return first(r["sets"]) ?: first(r["working_sets"]) ?: first(r["last_session_sets"])
+            ?: (r["best_observed_set"] as? JsonArray)?.let { (it.firstOrNull() as? JsonPrimitive)?.doubleOrNull }
+            ?: (r["load_kg"] as? JsonPrimitive)?.doubleOrNull
+    }
+
     /** Objectif NON validé, affiché comme tel. */
     fun futureTarget(t: JsonObject?): String? {
         if (t == null) return null

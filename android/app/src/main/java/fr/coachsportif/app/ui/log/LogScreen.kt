@@ -3,6 +3,10 @@ package fr.coachsportif.app.ui.log
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.filled.Close
@@ -213,6 +217,7 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
         }
         if (e.added) Text("Ajouté hors programme", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 4.dp))
+        if (e.options.size > 1) VariantPicker(e) { opt -> vm.switchVariant(i, opt) }
         if (e.refLine != null || e.targetLine != null) {
             Spacer(Modifier.height(10.dp))
             InfoBox {
@@ -443,4 +448,36 @@ private fun AddExerciseDialog(vm: LogViewModel, split: String?, onClose: () -> U
         },
         dismissButton = { TextButton(onClick = { if (creating) creating = false else onClose() }) { Text(if (creating) "Retour" else "Fermer") } },
     )
+}
+
+
+/** Menu déroulant « Machine utilisée » : barre, machine… La référence et l'objectif suivent le choix. */
+@Composable
+private fun VariantPicker(e: ExDraft, onPick: (VariantOption) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val current = e.options.firstOrNull { it.key == e.variantKey }
+    Box(Modifier.padding(top = 8.dp)) {
+        OutlinedButton(onClick = { open = true }, shape = RoundedCornerShape(12.dp)) {
+            Icon(Icons.Filled.SwapHoriz, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(current?.label ?: e.name, style = MaterialTheme.typography.labelLarge)
+            Icon(Icons.Filled.ArrowDropDown, "Changer de machine")
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            e.options.forEach { o ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(o.label, style = MaterialTheme.typography.titleSmall,
+                                fontWeight = if (o.key == e.variantKey) FontWeight.Bold else FontWeight.Normal)
+                            o.goal?.let { Text(it.removePrefix("🎯 "), style = MaterialTheme.typography.bodySmall,
+                                color = LocalExtra.current.muted) }
+                        }
+                    },
+                    leadingIcon = { if (o.key == e.variantKey) Icon(Icons.Filled.Check, null) },
+                    onClick = { open = false; onPick(o) },
+                )
+            }
+        }
+    }
 }

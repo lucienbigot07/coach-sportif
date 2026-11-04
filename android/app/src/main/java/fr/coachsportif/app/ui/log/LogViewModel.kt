@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import java.text.Normalizer
 import java.time.Instant
 
@@ -29,6 +33,10 @@ data class SetDraft(
     val rir: String = "",
     val done: Boolean = false,
 )
+
+/** Machine / variante possible pour un exercice (proposées par le coach dans target.alternatives). */
+@Serializable
+data class VariantOption(val key: String, val label: String, val goal: String? = null)
 
 @Serializable
 data class ExDraft(
@@ -44,6 +52,7 @@ data class ExDraft(
     val comment: String = "",             // commentaire libre sur l'exercice (sensations, réglage machine…)
     val added: Boolean = false,           // ajouté pendant la séance, hors programme du coach
     val newVariant: NewVariantIn? = null, // machine jamais enregistrée : créée à l'envoi
+    val options: List<VariantOption> = emptyList(), // choix barre / machine…, vide si une seule possibilité
 )
 
 @Serializable
@@ -101,6 +110,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     private fun initialDraft(a: PlannedActivity): LogDraft {
         val refs: List<ExerciseRef> = a.exercises.ifEmpty { a.splitReferences }
         val nSets = (a.target["sets_per_exercise_approx"]?.toString()?.toIntOrNull()) ?: 3
+        val alts = a.target["alternatives"] as? JsonObject
         return LogDraft(activityVersion = a.version, exercises = refs.map { e ->
             val ll = e.reference?.lastLogged
             val last = ll?.sets
@@ -114,7 +124,16 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 targetLine = e.notes?.takeIf { e.targetSets != null }?.let { "🎯 $it" }
                     ?: Fmt.futureTarget(e.reference?.futureTargetNotValidated),
                 sets = List(e.targetSets ?: nSets) { SetDraft(load = load?.let { Fmt.num(it) } ?: "") },
-            )
+            ).let { ex ->
+                val extra = (alts?.get(e.variantKey) as? JsonArray)?.mapNotNull { el ->
+                    val o = el as? JsonObject ?: return@mapNotNull null
+                    val k = o["key"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+                    VariantOption(k, o["label"]?.jsonPrimitive?.contentOrNull ?: k, o["goal"]?.jsonPrimitive?.contentOrNull)
+                }.orEmpty()
+                if (extra.isEmpty()) ex
+                else ex.copy(options = listOf(VariantOption(e.variantKey, e.equipmentVariant?.let { "${e.name} ($it)" } ?: e.name,
+                    ex.targetLine)) + extra)
+            }
         })
     }
 
@@ -178,6 +197,41 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         edit { d -> d.copy(exercises = d.exercises + ExDraft(variantKey = key, name = nv.name, equipment = nv.equipmentVariant,
             loadBasis = loadBasis, unit = unit, added = true, newVariant = nv, refLine = "Nouvelle machine : pas encore de référence",
             sets = List(3) { SetDraft() })) }
+    }
+
+    /**
+     * Change la machine / variante d'un exercice (ex. développé couché barre → machine) :
+     * référence, objectif, unité et charges pré-remplies suivent la variante choisie.
+     * Les séries déjà saisies sont conservées et seront enregistrées sur la nouvelle variante.
+     */
+    fun switchVariant(ex: Int, opt: VariantOption) {
+        val cur = (ui.value as? LogUi.Ready)?.draft?.exercises?.getOrNull(ex) ?: return
+        if (cur.variantKey == opt.key) return
+        val goal = opt.goal?.let { if (it.startsWith("🎯")) it else "🎯 $it" }
+        edit { d -> d.copy(exercises = d.exercises.mapIndexed { i, e ->
+            if (i != ex) e else e.copy(variantKey = opt.key, name = opt.label, equipment = null, targetLine = goal,
+                refLine = "Chargement de la référence…")
+        }) }
+        viewModelScope.launch {
+            val h = runCatching { repo.exerciseHistory(opt.key) }.getOrNull()
+            edit { d -> d.copy(exercises = d.exercises.mapIndexed { i, e ->
+                if (i != ex || e.variantKey != opt.key) e
+                else if (h == null) e.copy(refLine = "Référence indisponible hors connexion")
+                else {
+                    val ll = h.reference?.lastLogged
+                    val load = ll?.sets?.firstOrNull()?.loadKg ?: Fmt.historicalFirstLoad(h.reference?.historicalReference)
+                    val untouched = e.sets.none { it.done || it.perf.isNotEmpty() }
+                    e.copy(
+                        name = h.variant.name, equipment = h.variant.equipmentVariant, loadBasis = h.variant.loadBasis,
+                        unit = h.variant.performanceUnit,
+                        refLine = ll?.let { "Dernière (${it.date}) : ${Fmt.sets(it.sets, h.variant.loadBasis)}" }
+                            ?: Fmt.historical(h.reference?.historicalReference)?.let { "Référence : $it${Fmt.loadBasisLabel(h.variant.loadBasis)}" }
+                            ?: "Pas encore de référence sur cette machine",
+                        sets = if (untouched) e.sets.map { s -> s.copy(load = load?.let { Fmt.num(it) } ?: "") } else e.sets,
+                    )
+                }
+            }) }
+        }
     }
 
     /** Seuls les exercices ajoutés pendant la séance peuvent être retirés ; le programme du coach reste intact. */
