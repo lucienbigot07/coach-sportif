@@ -91,6 +91,4 @@ last as (select distinct on (key) id, key from planned_activities
 update planned_activities pa set plan_id = (select id from cur), status = 'skipped'
 from last where pa.id = last.id;
 
--- Marche du soir : ressenti 2/10 (et non 8/10)
-select correct_completed_activity('8b99eb97-fcd8-4075-a49c-7f972e75e191'::uuid, 1, '{"rpe_10": 2}'::jsonb,
-  'Ressenti mal saisi : 2/10 et non 8/10', 'fix-walk-rpe-20261103', 'claude_mcp') ->> 'success' as marche_corrigee;
+select 'correctifs appliqués' as resultat;
