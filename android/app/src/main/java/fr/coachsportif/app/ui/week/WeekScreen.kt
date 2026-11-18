@@ -53,6 +53,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.domain.asActivity
+import fr.coachsportif.app.domain.WeekPlan
+import fr.coachsportif.app.domain.bilan
+import fr.coachsportif.app.domain.bilanMessage
 import fr.coachsportif.app.domain.CompletedActivity
 import fr.coachsportif.app.domain.EventOut
 import fr.coachsportif.app.domain.Fmt
@@ -138,8 +141,10 @@ fun WeekScreen(onStart: (PlannedActivity) -> Unit) {
                 val date = start.plusDays(idx.toLong())
                 DayDetail(date, days.getOrNull(idx), events.filter { it.eventDate == date.toString() }, onStart)
             }
-            Spacer(Modifier.height(24.dp))
         }
+        // --- bilan de la semaine (ce qui a vraiment été enregistré)
+        cached?.data?.let { w -> if (LocalDate.parse(w.weekStart) <= Fmt.today()) item { BilanCard(w) } }
+        item { Spacer(Modifier.height(24.dp)) }
     }
 }
 
@@ -353,3 +358,44 @@ private fun regLabel(s: String) = when (s) {
     else -> s
 }
 
+
+
+/** Bilan : séances faites, km, séries… et envoi direct au coach. */
+@Composable
+private fun BilanCard(w: WeekPlan) {
+    val b = w.bilan()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val muted = LocalExtra.current.muted
+    Surface(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, LocalExtra.current.border),
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Text("📊 Bilan de la semaine", style = MaterialTheme.typography.titleMedium)
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                listOfNotNull(
+                    "${b.done}/${b.planned}" to "séances",
+                    b.runKm.takeIf { it > 0 }?.let { Fmt.num(it) to "km course" },
+                    b.strengthSets.takeIf { it > 0 }?.let { "$it" to "séries muscu" },
+                    b.swimM.takeIf { it > 0 }?.let { Fmt.num(it) to "m nage" },
+                ).forEach { (v, l) ->
+                    Column(Modifier.weight(1f)) {
+                        Text(v, style = NumberLarge)
+                        Text(l, style = MaterialTheme.typography.labelSmall, color = muted)
+                    }
+                }
+            }
+            if (b.extra > 0) Text("+ ${b.extra} séance(s) hors programme", style = MaterialTheme.typography.bodySmall,
+                color = muted, modifier = Modifier.padding(top = 8.dp))
+            if (b.skipped.isNotEmpty()) Text("Pas fait : ${b.skipped.joinToString(", ")}", style = MaterialTheme.typography.bodySmall,
+                color = muted, modifier = Modifier.padding(top = 4.dp))
+            if (b.pending.isNotEmpty()) Text("Pas encore enregistré : ${b.pending.joinToString(", ")}",
+                style = MaterialTheme.typography.bodySmall, color = fr.coachsportif.app.ui.theme.Amber, modifier = Modifier.padding(top = 4.dp))
+            androidx.compose.material3.OutlinedButton(
+                onClick = { fr.coachsportif.app.ui.components.CoachLink.open(ctx, w.bilanMessage()) },
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp), shape = RoundedCornerShape(14.dp),
+            ) { Text("Envoyer le bilan au coach") }
+        }
+    }
+}

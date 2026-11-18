@@ -10,6 +10,7 @@ import fr.coachsportif.app.domain.asActivity
 import fr.coachsportif.app.domain.CompletedActivity
 import fr.coachsportif.app.domain.CompletionPayload
 import fr.coachsportif.app.domain.EnduranceIn
+import fr.coachsportif.app.domain.ExerciseHistory
 import fr.coachsportif.app.domain.ExerciseRef
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.NewVariantIn
@@ -64,6 +65,18 @@ data class ExDraft(
     val options: List<VariantOption> = emptyList(), // choix barre / machine…, vide si une seule possibilité
 )
 
+/** Séances passées sur UNE machine / variante (jamais mélangées entre machines). */
+data class VariantStats(val lastDate: String?, val lastSets: List<SetOut>, val allSets: List<SetOut>)
+
+fun SetOut.perf(): Int? = reps ?: steps ?: seconds
+
+/** Vrai si (charge, perf) n'a jamais été égalé ni dépassé sur cette machine. */
+fun isRecord(load: Double?, perf: Int, history: List<SetOut>): Boolean {
+    if (history.isEmpty()) return false
+    val l = load ?: 0.0
+    return history.none { h -> val hp = h.perf() ?: return@none false; (h.loadKg ?: 0.0) >= l && hp >= perf }
+}
+
 @Serializable
 data class EnduranceDraft(
     val distance: String = "",    // km (course) ou m (natation)
@@ -106,6 +119,14 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
     val catalog = MutableStateFlow<List<VariantRow>?>(null)
     val catalogError = MutableStateFlow<String?>(null)
 
+    /** Historique par machine (pour la comparaison en direct et les records), hors séance en cours de modification. */
+    val stats = MutableStateFlow<Map<String, VariantStats>>(emptyMap())
+    private var excludeCompletedId: String? = null
+
+    /** Minuteur de repos : heure de fin (ms) ou null. */
+    val restEndAt = MutableStateFlow<Long?>(null)
+    val restLabel = MutableStateFlow("")
+
     init {
         viewModelScope.launch {
             // dernière version publiée par le coach (le cache sert seulement hors connexion)
@@ -122,6 +143,8 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 draftKey = "edit:$sessionKey"
                 val savedEdit = repo.loadDraft(draftKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
                 ui.value = LogUi.Ready(a, savedEdit?.takeIf { it.activityVersion == res.version } ?: draftFromResult(a, res))
+                excludeCompletedId = res.completedActivityId
+                loadStats()
                 return@launch
             }
             val saved = repo.loadDraft(sessionKey)?.let { runCatching { json.decodeFromString(LogDraft.serializer(), it) }.getOrNull() }
@@ -133,6 +156,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
                 else -> mergeCoachUpdate(saved, initialDraft(a))
             }
             ui.value = LogUi.Ready(a, draft)
+            loadStats()
             if (saved != null && saved.activityVersion != a.version) {
                 coachChanged.value = true
                 repo.saveDraft(draftKey, json.encodeToString(LogDraft.serializer(), draft))
@@ -236,6 +260,49 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         })
     }
 
+    private fun loadStats() {
+        val keys = (ui.value as? LogUi.Ready)?.draft?.exercises?.filter { it.newVariant == null }?.map { it.variantKey }?.distinct().orEmpty()
+        keys.forEach { k -> viewModelScope.launch { runCatching { repo.exerciseHistory(k) }.getOrNull()?.let { putStats(k, it) } } }
+    }
+
+    private fun putStats(key: String, h: ExerciseHistory) {
+        val sessions = h.sessions.filter { it.completedActivityId != excludeCompletedId }.sortedByDescending { it.date }
+        stats.value = stats.value + (key to VariantStats(
+            lastDate = sessions.firstOrNull()?.date,
+            lastSets = sessions.firstOrNull()?.workSets.orEmpty(),
+            allSets = sessions.flatMap { it.workSets },
+        ))
+    }
+
+    /** Démarre le repos après une série ; renvoie l'heure de fin (le minuteur système est lancé par l'écran). */
+    fun startRest(seconds: Int, label: String): Long {
+        val end = System.currentTimeMillis() + seconds * 1000L
+        restEndAt.value = end; restLabel.value = label
+        return end
+    }
+
+    fun shiftRest(deltaS: Int): Long? {
+        val cur = restEndAt.value ?: return null
+        val end = (cur + deltaS * 1000L).coerceAtLeast(System.currentTimeMillis() + 5_000)
+        restEndAt.value = end
+        return end
+    }
+
+    fun stopRest() { restEndAt.value = null }
+
+    /** Remplit le résultat avec une activité de la montre (Health Connect). Les champs restent modifiables. */
+    fun importWatch(w: fr.coachsportif.app.health.WatchSession, swim: Boolean) = edit { d ->
+        val e = d.endurance
+        d.copy(endurance = e.copy(
+            distance = w.distanceM?.let { if (swim) Fmt.num(it) else String.format(java.util.Locale.FRENCH, "%.2f", it / 1000) } ?: e.distance,
+            duration = Fmt.duration(w.durationS.toInt()) ?: e.duration,
+            avgHr = w.avgHr?.toString() ?: e.avgHr,
+            maxHr = w.maxHr?.toString() ?: e.maxHr,
+            ascent = w.ascentM?.let { Math.round(it).toString() } ?: e.ascent,
+        ), notes = if (d.notes.contains("Importé de la montre")) d.notes
+                   else (d.notes + "\nImporté de la montre (${fr.coachsportif.app.health.HealthImport.sourceLabel(w.source)} via Health Connect)").trim())
+    }
+
     fun edit(transform: (LogDraft) -> LogDraft) {
         val cur = ui.value as? LogUi.Ready ?: return
         val next = transform(cur.draft)
@@ -292,6 +359,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         edit { d -> d.copy(exercises = d.exercises + ex) }
         viewModelScope.launch {
             val h = runCatching { repo.exerciseHistory(v.key) }.getOrNull() ?: return@launch
+            putStats(v.key, h)
             val ll = h.reference?.lastLogged
             val load = ll?.sets?.firstOrNull()?.loadKg
             edit { d -> d.copy(exercises = d.exercises.map { e ->
@@ -332,6 +400,7 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         }) }
         viewModelScope.launch {
             val h = runCatching { repo.exerciseHistory(opt.key) }.getOrNull()
+            h?.let { putStats(opt.key, it) }
             edit { d -> d.copy(exercises = d.exercises.mapIndexed { i, e ->
                 if (i != ex || e.variantKey != opt.key) e
                 else if (h == null) e.copy(refLine = "Référence indisponible hors connexion")

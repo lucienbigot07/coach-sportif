@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.androidx.browser)
+    implementation(libs.health.connect)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

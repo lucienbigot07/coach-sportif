@@ -70,7 +70,7 @@ class HistoryViewModel(private val repo: Repository) : ViewModel() {
 
     fun load() = viewModelScope.launch {
         runCatching {
-            sessions.value = repo.recentSessions(50).sessions
+            sessions.value = repo.recentSessions(100).sessions
             variants.value = repo.variants()
         }.onFailure { error.value = describe(it) }
     }
@@ -117,6 +117,7 @@ fun HistoryScreen() {
             }
             1 -> {
                 val runs = sessions.filter { it.sport == "running" && it.endurance?.paceSPerKm != null }
+                item { WeeklyKmCard(sessions) }
                 item { PaceCard(runs) }
                 items(runs, key = { "r" + it.completedActivityId }) { r ->
                     LaneCard(sportStyle("running").color) {
@@ -223,5 +224,47 @@ private fun LineChart(values: List<Double>, invert: Boolean, color: Color, desc:
             }
         }
         Text(fmt(if (invert) max else min), style = MaterialTheme.typography.labelSmall, color = LocalExtra.current.muted)
+    }
+}
+
+
+/** Kilomètres de course par semaine (8 dernières semaines), barres. */
+@Composable
+private fun WeeklyKmCard(all: List<CompletedActivity>) {
+    val thisMonday = Fmt.mondayOf(Fmt.today())
+    val weeks = (7 downTo 0).map { thisMonday.minusWeeks(it.toLong()) }
+    val km = weeks.map { m ->
+        all.filter { it.sport == "running" && Fmt.mondayOf(java.time.LocalDate.parse(it.date)) == m }
+            .sumOf { it.endurance?.distanceM ?: 0.0 } / 1000
+    }
+    val muted = LocalExtra.current.muted
+    SectionCard {
+        Text("Kilomètres par semaine", style = MaterialTheme.typography.titleMedium)
+        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 8.dp)) {
+            Text(Fmt.num(km.last()), style = NumberLarge)
+            Text("  km cette semaine", style = MaterialTheme.typography.bodySmall, color = muted)
+        }
+        val max = (km.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
+        Row(Modifier.fillMaxWidth().height(140.dp).padding(top = 12.dp), verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            km.forEachIndexed { i, v ->
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (v > 0) Text(Fmt.num(v), style = MaterialTheme.typography.labelSmall, color = muted)
+                    Spacer(Modifier.height(2.dp))
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()
+                        .height((100 * (v / max)).dp.coerceAtLeast(3.dp))
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (i == km.lastIndex) Track else Track.copy(alpha = 0.45f)))
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            weeks.forEach { m ->
+                Text("${m.dayOfMonth}/${m.monthValue}", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall,
+                    color = muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
+        Text("Semaines commençant le lundi indiqué. Seules les sorties enregistrées comptent.",
+            style = MaterialTheme.typography.bodySmall, color = muted, modifier = Modifier.padding(top = 6.dp))
     }
 }

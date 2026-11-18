@@ -65,6 +65,15 @@ private fun AppNav() {
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     val start: (PlannedActivity) -> Unit = { a -> nav.navigate("log/${a.date}/${a.sessionKey}") }
+    // notifications : minuteur de repos (relayé sur la montre), rappel du soir, bilan du dimanche
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val askNotif = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(ctx,
+                android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+            askNotif.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
     Scaffold(bottomBar = {
         if (tabs.any { it.route == route }) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
             tabs.forEach { t ->

@@ -44,6 +44,8 @@ import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.data.remote.ApiException
 import fr.coachsportif.app.data.remote.OfflineException
 import fr.coachsportif.app.domain.asActivity
+import fr.coachsportif.app.domain.RaceInfo
+import fr.coachsportif.app.domain.nextRace
 import fr.coachsportif.app.domain.ExerciseRef
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.PlannedActivity
@@ -71,6 +73,7 @@ class DayViewModel(private val repo: Repository, val date: String) : ViewModel()
     val refreshing = MutableStateFlow(false)
 
     val message = MutableStateFlow<String?>(null)
+    val race = MutableStateFlow<RaceInfo?>(null)
 
     fun skip(a: PlannedActivity, reason: String) = viewModelScope.launch {
         val r = repo.skip(a.sessionKey, a.version, a.date, reason, "${a.title} (pas fait)")
@@ -87,6 +90,11 @@ class DayViewModel(private val repo: Repository, val date: String) : ViewModel()
             .onSuccess { error.value = null }
             .onFailure { error.value = describe(it) }
         refreshing.value = false
+        runCatching {
+            val d = java.time.LocalDate.parse(date)
+            val m = Fmt.mondayOf(d)
+            race.value = nextRace((0L..3L).mapNotNull { repo.weekPlan(m.plusWeeks(it).toString()) }, d)
+        }
     }
 }
 
@@ -105,6 +113,7 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
     val error by vm.error.collectAsState()
     val refreshing by vm.refreshing.collectAsState()
     val message by vm.message.collectAsState()
+    val race by vm.race.collectAsState()
     val ctx = LocalContext.current
     LaunchedEffect(date) { vm.refresh() }
 
@@ -135,6 +144,7 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
                     Spacer(Modifier.height(8.dp))
                 }
             }
+            race?.let { r -> item { RaceCard(r) } }
             if (plan == null) {
                 item { SectionCard { Text(if (error != null) "Aucune donnée sur ce téléphone pour l'instant. Glisse vers le bas quand tu as du réseau." else "Chargement…") } }
             } else if (plan.activities.isEmpty() && plan.unplannedCompleted.isEmpty()) {
@@ -312,4 +322,34 @@ private fun coachDayMessage(plan: fr.coachsportif.app.domain.DayPlan?, date: Str
     lines += ""
     lines += "Ma question : "
     return lines.joinToString("\n")
+}
+
+
+/** Compte à rebours jusqu'à la prochaine course, avec le plan d'allure publié par le coach. */
+@Composable
+private fun RaceCard(r: RaceInfo) {
+    val st = sportStyle("running")
+    val muted = LocalExtra.current.muted
+    LaneCard(st.color) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("🏁 ${r.name}", style = MaterialTheme.typography.titleMedium)
+                Text(listOfNotNull(Fmt.dayTitle(r.date), r.distanceM?.let { Fmt.km(it.toDouble()) }).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall, color = muted)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(when (r.daysLeft) { 0L -> "Jour J"; else -> "J-${r.daysLeft}" },
+                    style = fr.coachsportif.app.ui.theme.NumberLarge, color = st.color)
+                if (r.daysLeft > 0) Text(if (r.daysLeft == 1L) "c'est demain" else "dans ${r.daysLeft} jours",
+                    style = MaterialTheme.typography.labelSmall, color = muted)
+            }
+        }
+        r.activity?.let { a ->
+            val lines = Fmt.target(a.target).filterNot { it.startsWith("Distance") }
+            if (lines.isNotEmpty() || a.notes != null) InfoBox(Modifier.padding(top = 10.dp)) {
+                lines.forEach { Text(it, style = MaterialTheme.typography.labelMedium) }
+                a.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = muted) }
+            }
+        }
+    }
 }

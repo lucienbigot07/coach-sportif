@@ -67,6 +67,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import fr.coachsportif.app.data.SaveOutcome
+import fr.coachsportif.app.health.HealthImport
+import fr.coachsportif.app.health.WatchSession
+import fr.coachsportif.app.notify.RestTimer
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.health.connect.client.PermissionController
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Watch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import kotlin.math.abs
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.PlannedActivity
 import fr.coachsportif.app.ui.components.CoachLink
@@ -88,6 +102,8 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
     val outcome by vm.outcome.collectAsState()
     val coachChanged by vm.coachChanged.collectAsState()
     val editing by vm.editing.collectAsState()
+    val restEnd by vm.restEndAt.collectAsState()
+    val restLabel by vm.restLabel.collectAsState()
     var confirm by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
     val ready = ui as? LogUi.Ready
@@ -114,7 +130,17 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
             )
         },
         bottomBar = {
-            if (ready != null) Surface(tonalElevation = 3.dp, shadowElevation = 6.dp) {
+            if (ready != null) Surface(tonalElevation = 3.dp, shadowElevation = 6.dp) { Column {
+                restEnd?.let { end ->
+                    RestBar(end, restLabel,
+                        onShift = { d ->
+                            vm.shiftRest(d)?.let { RestTimer.start(ctx, it, restLabel) }
+                            RestTimer.setDefaultSeconds(ctx, (RestTimer.defaultSeconds(ctx) + d).coerceIn(30, 600))
+                        },
+                        onStop = { RestTimer.cancel(ctx); vm.stopRest() },
+                        onFinished = { vm.stopRest() })
+                    HorizontalDivider(color = LocalExtra.current.border)
+                }
                 Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -128,7 +154,7 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
                         Text(if (saving) "Enregistrement…" else if (editing) "Enregistrer les modifications" else "Terminer la séance")
                     }
                 }
-            }
+            } }
         },
     ) { pad ->
         when (val s = ui) {
@@ -211,6 +237,9 @@ fun LogScreen(date: String, sessionKey: String, onDone: () -> Unit) {
 @Composable
 private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
     val muted = LocalExtra.current.muted
+    val ctx = LocalContext.current
+    val allStats by vm.stats.collectAsState()
+    val st = allStats[e.variantKey]
     val doneCount = e.sets.count { it.done && !it.isWarmup }
     LaneCard(when { e.priority -> MaterialTheme.colorScheme.secondary; e.added -> MaterialTheme.colorScheme.tertiary
                     else -> sportStyle("strength").color }) {
@@ -247,6 +276,7 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
         var work = 0; var warm = 0
         e.sets.forEachIndexed { j, s ->
             val label = if (s.isWarmup) "É${++warm}" else "S${++work}"
+            val workIdx = work - 1
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(label, Modifier.width(44.dp), style = MaterialTheme.typography.labelLarge,
                     color = if (s.isWarmup) muted else MaterialTheme.colorScheme.onSurface)
@@ -259,8 +289,15 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
                 Spacer(Modifier.width(8.dp))
                 NumField(s.perf, Modifier.weight(1f)) { v -> vm.editSet(i, j) { it.copy(perf = v) } }
                 Spacer(Modifier.width(8.dp))
-                DoneToggle(s.done) { c -> vm.toggleDone(i, j, c) }
+                DoneToggle(s.done) { c ->
+                    vm.toggleDone(i, j, c)
+                    if (c && !vm.editing.value) {
+                        val secs = RestTimer.defaultSeconds(ctx)
+                        RestTimer.start(ctx, vm.startRest(secs, e.name), e.name)
+                    }
+                }
             }
+            if (!s.isWarmup) SetCompare(e, s, workIdx, st)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton(onClick = { vm.addSet(i, warmup = false) }) { Text("Ajouter une série") }
@@ -301,6 +338,8 @@ private fun EnduranceBlock(vm: LogViewModel, a: PlannedActivity, d: EnduranceDra
     val foot = a.sport == "football"
     LaneCard(st.color) {
         Text("Résultat", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(8.dp))
+        WatchImportButton(vm, a)
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             LabeledField(if (swim) "Distance (m)" else "Distance (km)", d.distance, Modifier.weight(1f), decimal = true) { v -> set { it.copy(distance = v) } }
@@ -489,5 +528,140 @@ private fun VariantPicker(e: ExDraft, onPick: (VariantOption) -> Unit) {
                 )
             }
         }
+    }
+}
+
+
+/** « vs 16/11 (60×10) : +2 rép. » et 🏆 si meilleure série jamais faite sur CETTE machine. */
+@Composable
+private fun SetCompare(e: ExDraft, s: SetDraft, workIdx: Int, st: VariantStats?) {
+    if (st == null) return
+    val perf = s.perf.toIntOrNull() ?: return
+    val load = Fmt.parseDecimal(s.load)
+    val unit = when (e.unit) { "steps" -> " pas"; "seconds" -> " s"; else -> " rép." }
+    val record = isRecord(load, perf, st.allSets)
+    val prev = st.lastSets.getOrNull(workIdx)
+    val pp = prev?.perf()
+    var tone = 0
+    val cmp = if (prev != null && pp != null) {
+        val pl = prev.loadKg
+        val dl = if (load != null && pl != null) load - pl else 0.0
+        val dp = perf - pp
+        val parts = listOfNotNull(
+            dl.takeIf { it != 0.0 }?.let { (if (it > 0) "+" else "−") + Fmt.num(abs(it)) + " kg" },
+            dp.takeIf { it != 0 }?.let { (if (it > 0) "+" else "−") + abs(it) + unit },
+        )
+        tone = when { dl > 0 || (dl == 0.0 && dp > 0) -> 1; dl < 0 || dp < 0 -> -1; else -> 0 }
+        val d = st.lastDate?.let { "${it.substring(8, 10)}/${it.substring(5, 7)}" } ?: "dernière"
+        "vs $d (${pl?.let { Fmt.num(it) + "×" } ?: ""}$pp) : " + parts.joinToString(" ").ifEmpty { "égalé" }
+    } else null
+    if (cmp == null && !record) return
+    val color = when {
+        record -> MaterialTheme.colorScheme.secondary
+        tone > 0 -> MaterialTheme.colorScheme.primary
+        tone < 0 -> fr.coachsportif.app.ui.theme.Amber
+        else -> LocalExtra.current.muted
+    }
+    Text(listOfNotNull(if (record) "🏆 Record" else null, cmp).joinToString("  ·  "),
+        style = MaterialTheme.typography.labelSmall, color = color, fontWeight = if (record) FontWeight.Bold else null,
+        modifier = Modifier.padding(start = 44.dp, bottom = 2.dp))
+}
+
+/** Barre de repos en bas de l'écran : compte à rebours, ±15 s (mémorisé), passer. */
+@Composable
+private fun RestBar(endAt: Long, label: String, onShift: (Int) -> Unit, onStop: () -> Unit, onFinished: () -> Unit) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(endAt) {
+        while (true) { now = System.currentTimeMillis(); if (now >= endAt) break; delay(250) }
+        delay(15_000); onFinished()
+    }
+    val left = ((endAt - now + 999) / 1000).coerceAtLeast(0)
+    val over = left == 0L
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Filled.Timer, null, tint = if (over) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(if (over) "C'est reparti !" else "%d:%02d".format(left / 60, left % 60), style = NumberLarge,
+                color = if (over) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface)
+            Text("Repos · $label", style = MaterialTheme.typography.labelSmall, color = LocalExtra.current.muted, maxLines = 1)
+        }
+        if (!over) {
+            TextButton(onClick = { onShift(-15) }) { Text("−15") }
+            TextButton(onClick = { onShift(15) }) { Text("+15") }
+        }
+        TextButton(onClick = onStop) { Text(if (over) "OK" else "Passer") }
+    }
+}
+
+/** Importe distance, durée, FC et D+ depuis la montre (Garmin Connect → Health Connect, lecture seule). */
+@Composable
+private fun WatchImportButton(vm: LogViewModel, a: PlannedActivity) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf<List<WatchSession>?>(null) }
+    var info by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    val swim = a.sport == "swimming"
+    val noData = "Aucune activité de la montre trouvée ce jour-là.\n\nDans Garmin Connect : Paramètres (ou « Plus ») → " +
+        "Applications connectées → Health Connect → autorise le partage des activités. Synchronise ta montre, puis réessaie."
+    fun load() {
+        scope.launch {
+            busy = true
+            runCatching { HealthImport.sessions(ctx, LocalDate.parse(a.date)) }
+                .onSuccess { if (it.isEmpty()) info = noData else list = it }
+                .onFailure { info = "Lecture impossible : ${it.message}" }
+            busy = false
+        }
+    }
+    val launcher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+        if (granted.containsAll(HealthImport.PERMISSIONS)) load()
+        else info = "Autorisation refusée. Tu peux l'accorder dans Health Connect → Autorisations des applis → Coach Sportif."
+    }
+    OutlinedButton(
+        onClick = {
+            if (!runCatching { HealthImport.available(ctx) }.getOrDefault(false))
+                info = "Health Connect n'est pas disponible sur ce téléphone (Paramètres → Applications → Health Connect)."
+            else scope.launch {
+                if (runCatching { HealthImport.hasPermissions(ctx) }.getOrDefault(false)) load()
+                else launcher.launch(HealthImport.PERMISSIONS)
+            }
+        },
+        enabled = !busy, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+    ) {
+        Icon(Icons.Filled.Watch, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
+        Text(if (busy) "Lecture de la montre…" else "Importer depuis la montre")
+    }
+    list?.let { sessions ->
+        AlertDialog(
+            onDismissRequest = { list = null },
+            title = { Text("Activités du ${Fmt.dayTitle(a.date)}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Choisis l'activité correspondant à cette séance :", style = MaterialTheme.typography.bodySmall,
+                        color = LocalExtra.current.muted)
+                    sessions.forEach { w ->
+                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { vm.importWatch(w, swim); list = null }
+                            .padding(12.dp)) {
+                            val t = w.start.atZone(Fmt.PARIS).toLocalTime()
+                            Text("${w.label} · %02d:%02d".format(t.hour, t.minute), style = MaterialTheme.typography.titleSmall)
+                            Text(listOfNotNull(
+                                w.distanceM?.let { if (swim) "${Fmt.num(it)} m" else "%.2f km".format(it / 1000) },
+                                Fmt.duration(w.durationS.toInt()),
+                                w.avgHr?.let { "FC $it" },
+                                w.ascentM?.takeIf { !swim && it > 0 }?.let { "D+ ${Math.round(it)} m" },
+                            ).joinToString("  ·  "), style = MaterialTheme.typography.bodySmall)
+                            Text(HealthImport.sourceLabel(w.source), style = MaterialTheme.typography.labelSmall, color = LocalExtra.current.muted)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { list = null }) { Text("Fermer") } },
+        )
+    }
+    info?.let { msg ->
+        AlertDialog(onDismissRequest = { info = null }, title = { Text("Montre") }, text = { Text(msg) },
+            confirmButton = { Button(onClick = { info = null }) { Text("OK") } })
     }
 }

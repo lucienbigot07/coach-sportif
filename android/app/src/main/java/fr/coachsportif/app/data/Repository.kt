@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -111,6 +112,12 @@ class Repository(
         fetch("week:$monday", WeekPlan.serializer(), "list_week_plan", buildJsonObject { put("p_week_start", monday) }) { it.planVersion }
         fetch("summary:$monday", WeekSummary.serializer(), "get_week_summary", buildJsonObject { put("p_week_start", monday) }) { null }
     }
+
+    /** Planning d'une semaine (réseau, mis en cache) ; repli sur le cache hors connexion. */
+    suspend fun weekPlan(monday: String): WeekPlan? =
+        runCatching {
+            fetch("week:$monday", WeekPlan.serializer(), "list_week_plan", buildJsonObject { put("p_week_start", monday) }) { it.planVersion }
+        }.getOrNull() ?: observeWeek(monday).first()?.data
 
     suspend fun recentSessions(limit: Int = 30): RecentSessions =
         AppJson.decodeFromJsonElement(RecentSessions.serializer(),

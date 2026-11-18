@@ -5,6 +5,8 @@ import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.data.auth.SessionStore
 import fr.coachsportif.app.data.local.LocalDb
 import fr.coachsportif.app.data.remote.SupabaseApi
+import fr.coachsportif.app.notify.DailyWorker
+import fr.coachsportif.app.notify.RestTimer
 import fr.coachsportif.app.sync.SyncWorker
 
 class CoachApp : Application() {
@@ -20,5 +22,7 @@ class CoachApp : Application() {
     override fun onCreate() {
         super.onCreate()
         SyncWorker.schedule(this) // vide la file éventuelle au démarrage
+        RestTimer.channels(this)
+        DailyWorker.schedule(this) // rappel du soir + bilan du dimanche
     }
 }
