@@ -20,7 +20,7 @@ fun cfg(name: String): String =
 
 android {
     namespace = "fr.coachsportif.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "fr.coachsportif.app"
