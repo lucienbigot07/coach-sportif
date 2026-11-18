@@ -244,6 +244,25 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         })
     }
 
+    /**
+     * Coche / décoche une série. Si on coche une série dont les répétitions (ou pas / secondes) sont vides,
+     * on reprend celles de la série précédente du même type (travail ou échauffement) ; idem pour la charge.
+     */
+    fun toggleDone(ex: Int, set: Int, checked: Boolean) = edit { d ->
+        d.copy(exercises = d.exercises.mapIndexed { i, e ->
+            if (i != ex) e else e.copy(sets = e.sets.mapIndexed { j, s ->
+                if (j != set) s
+                else if (!checked) s.copy(done = false)
+                else {
+                    val before = e.sets.take(j).filter { it.isWarmup == s.isWarmup }
+                    val perf = s.perf.ifBlank { before.lastOrNull { it.perf.isNotBlank() }?.perf ?: "" }
+                    val load = s.load.ifBlank { before.lastOrNull { it.load.isNotBlank() }?.load ?: "" }
+                    s.copy(done = true, perf = perf, load = load)
+                }
+            })
+        })
+    }
+
     fun addSet(ex: Int, warmup: Boolean) = edit { d ->
         d.copy(exercises = d.exercises.mapIndexed { i, e ->
             if (i != ex) e else {

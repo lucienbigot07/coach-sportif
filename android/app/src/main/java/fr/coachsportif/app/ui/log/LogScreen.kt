@@ -259,7 +259,7 @@ private fun ExerciseBlock(vm: LogViewModel, i: Int, e: ExDraft) {
                 Spacer(Modifier.width(8.dp))
                 NumField(s.perf, Modifier.weight(1f)) { v -> vm.editSet(i, j) { it.copy(perf = v) } }
                 Spacer(Modifier.width(8.dp))
-                DoneToggle(s.done) { c -> vm.editSet(i, j) { it.copy(done = c) } }
+                DoneToggle(s.done) { c -> vm.toggleDone(i, j, c) }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
