@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.data.SaveOutcome
 import fr.coachsportif.app.data.remote.AppJson
+import fr.coachsportif.app.domain.DONE_KEY_PREFIX
+import fr.coachsportif.app.domain.asActivity
 import fr.coachsportif.app.domain.CompletedActivity
 import fr.coachsportif.app.domain.CompletionPayload
 import fr.coachsportif.app.domain.EnduranceIn
@@ -108,7 +110,10 @@ class LogViewModel(private val repo: Repository, private val date: String, priva
         viewModelScope.launch {
             // dernière version publiée par le coach (le cache sert seulement hors connexion)
             val fresh = runCatching { repo.refreshDay(date) }.getOrNull()
-            val a = (fresh ?: repo.observeDay(date).first()?.data)?.activities?.firstOrNull { it.sessionKey == sessionKey }
+            val day = fresh ?: repo.observeDay(date).first()?.data
+            val a = if (sessionKey.startsWith(DONE_KEY_PREFIX))
+                day?.unplannedCompleted?.firstOrNull { DONE_KEY_PREFIX + it.completedActivityId == sessionKey }?.asActivity()
+            else day?.activities?.firstOrNull { it.sessionKey == sessionKey }
             if (a == null) { ui.value = LogUi.Missing("Séance introuvable dans le dernier planning synchronisé."); return@launch }
             val res = a.result
             if (a.status == "completed" && res != null) {

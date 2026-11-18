@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.coachsportif.app.data.Repository
+import fr.coachsportif.app.domain.asActivity
 import fr.coachsportif.app.domain.CompletedActivity
 import fr.coachsportif.app.domain.EventOut
 import fr.coachsportif.app.domain.Fmt
@@ -266,7 +267,7 @@ private fun DayDetail(date: LocalDate, day: WeekDay?, events: List<EventOut>, on
             }
         }
         acts.forEach { a -> SessionTile(a, onStart) }
-        unplanned.forEach { r -> CompletedTile(r) }
+        unplanned.forEach { r -> CompletedTile(r) { onStart(r.asActivity()) } }
     }
 }
 
@@ -274,7 +275,7 @@ private fun DayDetail(date: LocalDate, day: WeekDay?, events: List<EventOut>, on
 private fun SessionTile(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) {
     val st = sportStyle(a.sport, a.subtype)
     val muted = LocalExtra.current.muted
-    val actionable = a.status in listOf("planned", "pending_confirmation", "in_progress") ||
+    val actionable = a.status in listOf("planned", "pending_confirmation", "in_progress", "skipped", "cancelled") ||
         (a.status == "completed" && a.result != null)  // ouvre la modification
     Surface(
         Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(RoundedCornerShape(20.dp))
@@ -324,10 +325,10 @@ private fun SessionTile(a: PlannedActivity, onStart: (PlannedActivity) -> Unit) 
 }
 
 @Composable
-private fun CompletedTile(r: CompletedActivity) {
+private fun CompletedTile(r: CompletedActivity, onOpen: () -> Unit) {
     val st = sportStyle(r.sport, r.subtype)
     Surface(
-        Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface,
+        Modifier.fillMaxWidth().padding(bottom = 10.dp).clip(RoundedCornerShape(20.dp)).clickable { onOpen() }, shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, LocalExtra.current.border),
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -43,6 +43,7 @@ import androidx.lifecycle.viewModelScope
 import fr.coachsportif.app.data.Repository
 import fr.coachsportif.app.data.remote.ApiException
 import fr.coachsportif.app.data.remote.OfflineException
+import fr.coachsportif.app.domain.asActivity
 import fr.coachsportif.app.domain.ExerciseRef
 import fr.coachsportif.app.domain.Fmt
 import fr.coachsportif.app.domain.PlannedActivity
@@ -156,6 +157,8 @@ fun TodayScreen(date: String = Fmt.today().toString(), onStart: (PlannedActivity
                         StatusChip("completed")
                     }
                     ResultSummary(r)
+                    OutlinedButton(onClick = { onStart(r.asActivity()) }, modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                        shape = RoundedCornerShape(14.dp)) { Text("Modifier") }
                 }
             }
             item {
@@ -232,6 +235,10 @@ fun ActivityCard(a: PlannedActivity, onStart: (PlannedActivity) -> Unit, onSkip:
             if (a.status in listOf("planned", "pending_confirmation", "in_progress"))
                 Button(onClick = { onStart(a) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                     Text(if (a.status == "pending_confirmation") "J'y suis allé" else "Commencer")
+                }
+            if (a.status in listOf("skipped", "cancelled"))
+                OutlinedButton(onClick = { onStart(a) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                    Text("Finalement fait")
                 }
             OutlinedButton(onClick = { expanded = !expanded }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
                 Text(if (expanded) "Masquer" else "Détails")

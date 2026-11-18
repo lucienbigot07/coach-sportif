@@ -266,3 +266,23 @@ data class CompletionPayload(
     val sets: List<SetIn> = emptyList(),
     val endurance: EnduranceIn? = null,
 )
+
+/** Préfixe des clés « séance hors programme déjà terminée » (ouverte en modification dans l'écran de saisie). */
+const val DONE_KEY_PREFIX = "done-"
+
+/** Séance terminée hors programme présentée comme une activité, pour pouvoir l'ouvrir et la modifier. */
+fun CompletedActivity.asActivity(): PlannedActivity = PlannedActivity(
+    sessionKey = DONE_KEY_PREFIX + completedActivityId,
+    id = completedActivityId,
+    date = date,
+    sport = sport,
+    subtype = subtype,
+    title = when (sport) {
+        "running" -> "Course"; "swimming" -> "Natation"; "strength" -> Fmt.splitLabel(subtype) ?: "Musculation"
+        "football" -> "Football"; "hyrox" -> "Hyrox"; "cycling" -> "Vélo"; "walking" -> "Marche"; "mobility" -> "Mobilité"
+        else -> "Séance"
+    } + " (hors programme)",
+    status = "completed",
+    version = version,
+    result = this,
+)
